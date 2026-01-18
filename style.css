@@ -150,18 +150,16 @@ button:hover { background: #2ecc71; }
     position: fixed;
     bottom: 20px;
     right: 20px;
+    width: auto !important; /* Ez megakadályozza, hogy hosszú legyen */
     background: #e67e22;
     color: white;
-    padding: 10px 15px;
+    padding: 10px 20px;
     border-radius: 8px;
-    z-index: 3000; /* Legyen magasabb mindennél */
+    z-index: 3000;
     cursor: pointer;
     font-weight: bold;
     border: 2px solid #d35400;
-}
-.cheat-btn:hover {
-    opacity: 1;
-    background: #d35400;
+    white-space: nowrap; /* Biztosítja, hogy ne törjön több sorba a szöveg */
 }
 
 .shop-item {

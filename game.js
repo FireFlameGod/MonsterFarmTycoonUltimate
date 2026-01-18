@@ -70,7 +70,19 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 
 function drawMap() {
+    if (!ctx || !images.water.complete) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // --- VÉGTELEN VÍZ HÁTTÉR ---
+    // Létrehozunk egy mintát a water.png-ből
+    const ptrn = ctx.createPattern(images.water, 'repeat');
+    ctx.fillStyle = ptrn;
+    
+    // Elmentjük a rajz állapotát, eltoljuk a háttért is a kamerával, majd visszaállítjuk
+    ctx.save();
+    ctx.translate(mapOffsetX % tileW, mapOffsetY % tileH); 
+    ctx.fillRect(-tileW * 2, -tileH * 2, canvas.width + tileW * 4, canvas.height + tileH * 4);
+    ctx.restore();
     
     // Optimalizálás: image smoothing kikapcsolása pixel artnál
     ctx.imageSmoothingEnabled = false; 

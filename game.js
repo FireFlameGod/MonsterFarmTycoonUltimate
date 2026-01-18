@@ -45,7 +45,10 @@ const fileNames = {
     sand: 'sand.png',
     water: 'water.png',
     tree: 'tree.png',
-    rock: 'rock.png'
+    rock: 'rock.png',
+    house: 'assets/house.png',
+    boat: 'assets/boat.png',
+    mine: 'assets/mine.png'
 };
 
 Object.keys(fileNames).forEach(key => {
@@ -149,7 +152,9 @@ function drawMap() {
                     let w = tileW * scale;
                     let h = (img.height * (w / img.width));
                     let yOffset = (obj.type === 'tree') ? 40 : 45; 
-
+                    if (obj.type === 'house') scale = 1.5; // Nagyobb ház
+                    if (obj.type === 'mine') scale = 1.3;
+                    if (obj.type === 'boat') scale = 1.2;
                     if (obj.isShaking) {
                         ctx.globalAlpha = 0.6;
                         ctx.drawImage(img, screenX - w/2 + (Math.random()*10-5), screenY - h + (tileH / 2) + yOffset, w, h);
@@ -222,20 +227,33 @@ function handleMapClick(mouseX, mouseY) {
 
     // --- ÉPÍTÉS MÓD ---
     if (isBuilding) {
-        // Csak fűre vagy virágra (1 vagy 2) építhetünk, és csak ha üres a hely
-        if (mapData[ty] && (mapData[ty][tx] === 1 || mapData[ty][tx] === 2) && !objectData[key]) {
-            // Pénz levonása
-            update(ref(db, `users/${currentPlayer}`), {
-                coin: increment(-isBuilding.price)
-            });
-            // Tárgy elhelyezése
-            const newObj = { type: isBuilding.type, health: rewards[isBuilding.type].health };
-            set(ref(db, `islands/${currentPlayer}/${key}`), newObj);
-            
-            isBuilding = null; // Kilépés az építő módból
-            return;
-        }
+    const tileType = mapData[ty][tx];
+    const canPlaceOnLand = (tileType === 1 || tileType === 2 || tileType === 3);
+    const canPlaceOnWater = (tileType === 0);
+    
+    let allowed = false;
+    if (isBuilding.type === 'boat' && canPlaceOnWater) allowed = true;
+    if ((isBuilding.type === 'house' || isBuilding.type === 'mine') && canPlaceOnLand) allowed = true;
+
+    if (allowed && !objectData[key]) {
+        update(ref(db, `users/${currentPlayer}`), {
+            coin: increment(-isBuilding.price)
+        });
+
+        const newObj = { 
+            type: isBuilding.type, 
+            health: rewards[isBuilding.type].health 
+        };
+        set(ref(db, `islands/${currentPlayer}/${key}`), newObj);
+        
+        isBuilding = null;
+        return;
+    } else {
+        alert("Ide nem építheted ezt!");
+        isBuilding = null;
+        return;
     }
+}
 
 
 

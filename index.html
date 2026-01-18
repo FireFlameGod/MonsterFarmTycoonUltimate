@@ -28,20 +28,18 @@
 
     <button onclick="toggleShop()" class="shop-btn">🛒 Bolt</button>
 
-    <div id="shop-window" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close" onclick="toggleShop()">&times;</span>
-            <h2>Commerce Shop</h2>
-            <div class="shop-items">
-                <div class="shop-item">
-                    <p>🌲 Új Fa (15 CC)</p>
-                    <button onclick="buyItem('tree', 15)">Vásárlás</button>
-                </div>
-                <div class="shop-item">
-                    <p>🪨 Új Kő (30 CC)</p>
-                    <button onclick="buyItem('rock', 30)">Vásárlás</button>
-                </div>
-            </div>
+    <div class="shop-items">
+        <div class="shop-item">
+            <p>🏠 Ház (200 CC)</p>
+            <button onclick="buyItem('house', 200)">Vásárlás</button>
+        </div>
+        <div class="shop-item">
+            <p>⛵ Hajó (500 CC)</p>
+            <button onclick="buyItem('boat', 500)">Vásárlás</button>
+        </div>
+        <div class="shop-item">
+            <p>⛏️ Bánya (1000 CC)</p>
+            <button onclick="buyItem('mine', 1000)">Vásárlás</button>
         </div>
     </div>
 

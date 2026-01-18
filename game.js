@@ -90,12 +90,6 @@ function drawTile(x, y, type) {
         if (images.grass.complete) {
             ctx.drawImage(images.grass, x - tileW / 2, y, tileW, tileH);
         } else {
-            // Ha még nem töltött be a kép, rajzoljunk zöldet helyette
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo(x + tileW / 2, y + tileH / 2);
-            ctx.lineTo(x, y + tileH);
-            ctx.lineTo(x - tileW / 2, y + tileH / 2);
             ctx.fillStyle = "#2ecc71";
             ctx.fill();
         }

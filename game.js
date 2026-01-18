@@ -18,6 +18,12 @@ const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 let currentPlayer = null;
 const isMobile = window.innerWidth < 768;
+let gameZoom = isMobile ? 0.6 : 1.0; // Mobilon távolabb van a kamera, hogy többet láss
+let mapOffsetX = isMobile ? window.innerWidth / 2 : 500; 
+let mapOffsetY = isMobile ? 50 : -500;
+
+
+
 const tileW = 128; 
 const tileH = 64; 
 const mapSize = 30; 
@@ -289,59 +295,52 @@ function drawMap() {
     ctx.fillStyle = "#000000"; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Kiszámoljuk a zoomolt méreteket, hogy ne a loopon belül szorozgassunk
+    const zW = tileW * gameZoom;
+    const zH = tileH * gameZoom;
+    const zOverlap = visualOverlap * gameZoom;
+
     for (let y = 0; y < mapSize; y++) {
         for (let x = 0; x < mapSize; x++) {
-            let screenX = (x - y) * (tileW / 2) + mapOffsetX;
-            let screenY = (x + y) * (tileH / 2) + mapOffsetY;
+            // Itt a fix: a koordinátákat is a zoomolt mérethez igazítjuk
+            let screenX = (x - y) * (zW / 2) + mapOffsetX;
+            let screenY = (x + y) * (zH / 2) + mapOffsetY;
             
-            if (screenX > -tileW && screenX < canvas.width + tileW && 
-                screenY > -tileH && screenY < canvas.height + tileH) {
+            // Csak akkor rajzolunk, ha látjuk (levágás)
+            if (screenX > -zW && screenX < canvas.width + zW && 
+                screenY > -zH && screenY < canvas.height + zH) {
                 
-                drawTile(screenX, screenY, mapData[y][x]);
+                // 1. Talaj rajzolása
+                drawTile(screenX, screenY, mapData[y][x], zW, zH, zOverlap);
 
+                // 2. Objektumok rajzolása
                 const key = `${y}_${x}`;
                 let obj = objectData[key]; 
                 
                 if (obj && images[obj.type] && images[obj.type].complete) {
                     let img = images[obj.type];
 
-                    // ALAPÉRTELMEZETT ÉRTÉKEK
+                    // Alapméretek és eltolások (a te eredeti értékeid szorozva a zoommal)
                     let scale = 1.0;
                     let yOffset = 40;
 
-                    // EGYEDI BEÁLLÍTÁSOK TÍPUSONKÉNT
-                    if (obj.type === 'tree') {
-                        scale = 1.3;
-                        yOffset = 40;
-                    } 
-                    else if (obj.type === 'rock') {
-                        scale = 0.9;
-                        yOffset = 55;
-                    } 
-                    else if (obj.type === 'house') {
-                        scale = 2.0;    // Itt növeld a ház méretét
-                        yOffset = 110;   // Itt told lejjebb/feljebb
-                    } 
-                    else if (obj.type === 'mine') {
-                        scale = 2.0;    // Itt növeld a bánya méretét
-                        yOffset = 120;
-                    } 
-                    else if (obj.type === 'boat') {
-                        scale = 2.0;
-                        yOffset = 100;   // A hajó kevesebb offsetet kap, hogy a vízben üljön
-                    }
+                    if (obj.type === 'tree') { scale = 1.3; yOffset = 40; } 
+                    else if (obj.type === 'rock') { scale = 0.9; yOffset = 55; } 
+                    else if (obj.type === 'house') { scale = 2.0; yOffset = 110; } 
+                    else if (obj.type === 'mine') { scale = 2.0; yOffset = 120; } 
+                    else if (obj.type === 'boat') { scale = 2.0; yOffset = 100; }
 
-                    // Kiszámoljuk a szélességet és magasságot az új scale alapján
-                    let w = tileW * scale;
+                    // Minden méretet a zoomhoz igazítunk
+                    let w = zW * scale;
                     let h = (img.height * (w / img.width));
+                    let finalYOffset = yOffset * gameZoom;
 
-                    // Megrajzolás (marad a korábbi logikád)
                     if (obj.isShaking) {
                         ctx.globalAlpha = 0.6;
-                        ctx.drawImage(img, screenX - w/2 + (Math.random()*4-2), screenY - h + (tileH / 2) + yOffset, w, h);
+                        ctx.drawImage(img, screenX - w/2 + (Math.random()*4-2), screenY - h + (zH / 2) + finalYOffset, w, h);
                         ctx.globalAlpha = 1.0;
                     } else {
-                        ctx.drawImage(img, screenX - w/2, screenY - h + (tileH / 2) + yOffset, w, h);
+                        ctx.drawImage(img, screenX - w/2, screenY - h + (zH / 2) + finalYOffset, w, h);
                     }
                 }
             }
@@ -349,14 +348,23 @@ function drawMap() {
     }
 }
 
-function drawTile(x, y, type) {
+function drawTile(x, y, type, zW, zH, zOverlap) {
     let img = images.water;
     if (type === 1) img = images.grass;
     else if (type === 2) img = images.flower;
     else if (type === 3) img = images.sand;
+    
     if (img && img.complete) {
-        let drawHeight = img.height * (tileW / img.width);
-        ctx.drawImage(img, Math.floor(x - (tileW / 2) - (visualOverlap / 2)), Math.floor(y - (visualOverlap / 2)), tileW + visualOverlap, drawHeight + visualOverlap);
+        // Kiszámoljuk a rajzolási magasságot a zoomolt szélesség alapján
+        let drawHeight = img.height * (zW / img.width);
+        
+        ctx.drawImage(
+            img, 
+            Math.floor(x - (zW / 2) - (zOverlap / 2)), 
+            Math.floor(y - (zOverlap / 2)), 
+            zW + zOverlap, 
+            drawHeight + zOverlap
+        );
     }
 }
 
@@ -377,12 +385,19 @@ window.addEventListener('pointermove', (e) => {
         mapOffsetX += e.clientX - lastX;
         mapOffsetY += e.clientY - lastY;
 
-        // --- KAMERA BOUNDS (A te általad kért pontos értékek) ---
-        if (mapOffsetX < 0) mapOffsetX = 0;
-        if (mapOffsetX > window.innerWidth) mapOffsetX = window.innerWidth;
-        
-        if (mapOffsetY < -1000) mapOffsetY = -1000;
-        if (mapOffsetY > 0) mapOffsetY = 0;
+        if (isMobile) {
+            // MOBIL HATÁROK (Engedékenyebb, hogy a kis képernyőn is mozogjon)
+            if (mapOffsetX < -200) mapOffsetX = -200;
+            if (mapOffsetX > window.innerWidth + 200) mapOffsetX = window.innerWidth + 200;
+            if (mapOffsetY < -800) mapOffsetY = -800;
+            if (mapOffsetY > 400) mapOffsetY = 400;
+        } else {
+            // EREDETI GÉPI HATÁROK (Változatlanul hagytuk neked!)
+            if (mapOffsetX < 0) mapOffsetX = 0;
+            if (mapOffsetX > window.innerWidth) mapOffsetX = window.innerWidth;
+            if (mapOffsetY < -1000) mapOffsetY = -1000;
+            if (mapOffsetY > 0) mapOffsetY = 0;
+        }
 
         lastX = e.clientX; 
         lastY = e.clientY;
@@ -401,8 +416,8 @@ window.addEventListener('pointerup', (e) => {
 });
 
 function handleMapClick(mouseX, mouseY) {
-    let mx = mouseX - mapOffsetX;
-    let my = mouseY - mapOffsetY;
+    let mx = (mouseX - mapOffsetX) / gameZoom; // Visszaosztjuk a zoommal!
+    let my = (mouseY - mapOffsetY) / gameZoom; // Visszaosztjuk a zoommal!
     let tx = Math.floor((my / (tileH / 2) + mx / (tileW / 2)) / 2);
     let ty = Math.floor((my / (tileH / 2) - mx / (tileW / 2)) / 2);
     const key = `${ty}_${tx}`;

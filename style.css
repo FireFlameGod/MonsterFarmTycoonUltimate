@@ -211,6 +211,65 @@ button:hover { background: #2ecc71; transform: translateY(-1px); }
     border-color: #3498db;
 }
 
+/* Fülek stílusa */
+.inv-tabs {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+}
+
+.tab-btn {
+    flex: 1;
+    font-size: 14px !important;
+    padding: 8px !important;
+    background: rgba(255,255,255,0.1) !important;
+}
+
+.tab-btn.active {
+    background: #3498db !important;
+    color: white;
+}
+
+/* Lista nézet stílusa */
+.inv-list-view {
+    max-height: 250px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.inv-row {
+    display: flex;
+    align-items: center;
+    background: rgba(0,0,0,0.3);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.inv-row img {
+    width: 30px; /* Kisebb ikonok */
+    height: 30px;
+    margin-right: 15px;
+    object-fit: contain;
+}
+
+.inv-row .item-name {
+    flex-grow: 1;
+    text-align: left;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.inv-row .item-count {
+    color: #f1c40f;
+    font-family: monospace;
+    font-size: 16px;
+}
+
 /* --- MOBIL FIXEK --- */
 @media (max-width: 768px) {
     .level-container { max-width: 140px; margin-left: 10px; }

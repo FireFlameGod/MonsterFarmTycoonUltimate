@@ -49,14 +49,20 @@
     </div>
 
     <div id="inventory-window" class="modal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 400px; padding: 15px;">
             <span class="close" onclick="toggleInventory()">&times;</span>
-            <h2>Hátizsák</h2>
-            <div id="inventory-items" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px;">
+            <h2 style="margin-top: 0;">Hátizsák</h2>
+            
+            <div class="inv-tabs">
+                <button class="tab-btn active" onclick="switchInvTab('fish')">🐟 Halak</button>
+                <button class="tab-btn" onclick="switchInvTab('ores')">💎 Ércek</button>
+            </div>
+
+            <div id="inventory-list" class="inv-list-view">
                 </div>
         </div>
     </div>
-    
+        
 
     <div id="level-up-modal" class="modal">
         <div class="modal-content" style="border-color: #f1c40f; background: linear-gradient(145deg, #2c3e50, #34495e);">

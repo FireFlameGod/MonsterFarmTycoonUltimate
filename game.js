@@ -21,7 +21,7 @@ const isMobile = window.innerWidth < 768;
 let gameZoom = isMobile ? 0.6 : 1.0; // Mobilon távolabb van a kamera, hogy többet láss
 let mapOffsetX = isMobile ? window.innerWidth / 2 : 500; 
 let mapOffsetY = isMobile ? 50 : -500;
-
+let currentInvTab = 'fish';
 
 
 const tileW = 128; 
@@ -208,6 +208,64 @@ window.removeWorker = function(key) {
         });
         setTimeout(openNpcModal, 200);
     }
+};
+
+
+
+window.switchInvTab = function(tabId) {
+    currentInvTab = tabId;
+    
+    // Fülek vizuális váltása
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if(btn.innerText.toLowerCase().includes(tabId === 'fish' ? 'halak' : 'ércek')) {
+            btn.classList.add('active');
+        }
+    });
+    
+    refreshInventoryUI();
+};
+
+window.refreshInventoryUI = async function() {
+    const listContainer = document.getElementById('inventory-list');
+    if (!listContainer) return;
+    listContainer.innerHTML = ""; 
+
+    const snap = await get(ref(db, `users/${currentPlayer}/inventory`));
+    const inv = snap.val() || {};
+
+    // Adatok definiálása kategóriák szerint
+    const categories = {
+        fish: [
+            { id: 'fish', name: 'Közönséges hal' },
+            { id: 'fish2', name: 'Ritka hal' },
+            { id: 'fish3', name: 'Egzotikus hal' },
+            { id: 'kraken', name: 'Kraken' }
+        ],
+        ores: [
+            { id: 'iron_ore', name: 'Vasérc' },
+            { id: 'gold_ore', name: 'Aranyérc' },
+            { id: 'green_jade', name: 'Zöld Jade' },
+            { id: 'purple_jade', name: 'Lila Jade' }
+        ]
+    };
+
+    // Csak az aktuális kategória elemeit jelenítjük meg
+    categories[currentInvTab].forEach(item => {
+        const count = inv[item.id] || 0;
+        
+        const row = document.createElement('div');
+        row.className = "inv-row";
+        if (count === 0) row.style.opacity = "0.5";
+
+        row.innerHTML = `
+            <img src="${fileNames[item.id] || 'icons/placeholder.png'}">
+            <span class="item-name">${item.name}</span>
+            <span class="item-count">${count} db</span>
+        `;
+        
+        listContainer.appendChild(row);
+    });
 };
 
 function showStatus(text) {

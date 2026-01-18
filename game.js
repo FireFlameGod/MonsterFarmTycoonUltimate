@@ -160,7 +160,7 @@ window.addEventListener('mousemove', (e) => {
         // Függőleges (Fel/Le)
         // A -200 és +800 közötti tartomány biztosítja, hogy lásd az alját is
         if (mapOffsetY < -1000) mapOffsetY = -1000; // Felső korlát (kevesebb fekete fent)
-        if (mapOffsetY > 1000) mapOffsetY = 1000;  // Alsó korlát (több hely lefelé húzni)
+        if (mapOffsetY > 0) mapOffsetY = 0;  // Alsó korlát (több hely lefelé húzni)
 
         lastX = e.clientX; 
         lastY = e.clientY;
@@ -239,7 +239,7 @@ function startGame(user) {
 
     // Kezdő középpont beállítása
     mapOffsetX = window.innerWidth / 2;
-    mapOffsetY = 500;
+    mapOffsetY = 1000;
 
     resizeCanvas(); 
     onValue(ref(db, `users/${user}`), (snap) => {

@@ -124,14 +124,21 @@ window.addEventListener('mousemove', (e) => {
     if (isDragging) {
         let newX = mapOffsetX + (e.clientX - lastX);
         let newY = mapOffsetY + (e.clientY - lastY);
-
+        const totalMapWidth = mapSize * tileW;
+        const totalMapHeight = mapSize * tileH;
         // Kiszámoljuk a térkép széleit, hogy ne lehessen lehúzni a pályáról
         // A 0,0 pont és a mapSize,mapSize pont vetületei alapján
-        const limitX = (mapSize * tileW) / 2;
-        const limitY = (mapSize * tileH);
+        const limitX = totalMapWidth / 2;
+        if (newX > window.innerWidth / 2 - limitX && newX < window.innerWidth / 2 + limitX) {
+            mapOffsetX = newX;
+        }
 
-        if (Math.abs(newX - window.innerWidth / 2) < limitX) mapOffsetX = newX;
-        if (newY > -limitY/4 && newY < limitY) mapOffsetY = newY;
+        // Függőleges korlát (Y): 
+        // A kezdőpont (150) környékén tartjuk, a térkép magasságától függően
+        const limitY = totalMapHeight / 2;
+        if (newY > -limitY + 200 && newY < limitY) {
+            mapOffsetY = newY;
+        }
 
         lastX = e.clientX; 
         lastY = e.clientY;

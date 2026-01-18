@@ -113,9 +113,9 @@ window.buyItem = function(type, price) {
             isBuilding = { type: type, price: price };
             window.toggleShop();
             document.getElementById('game-canvas').style.cursor = 'crosshair';
-            alert("Válaszd ki a helyet a szigeten!");
+
         } else {
-            alert("Nincs elég Commerce Coinod!");
+
         }
     });
 };
@@ -445,7 +445,6 @@ function handleMapClick(mouseX, mouseY) {
             isBuilding = null;
             canvas.style.cursor = 'default';
         } else {
-            alert("Ide nem építhetsz!");
             isBuilding = null;
         }
         return;

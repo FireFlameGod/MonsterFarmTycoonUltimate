@@ -362,12 +362,25 @@ function drawTile(x, y, type) {
 
 let isDragging = false;
 let startDragX, startDragY, lastX, lastY;
-
+let lastTouchX = 0, lastTouchY = 0;
+canvas.style.cursor = 'default';
 canvas.addEventListener('mousedown', (e) => {
     isDragging = true;
     startDragX = e.clientX; startDragY = e.clientY;
     lastX = e.clientX; lastY = e.clientY;
+    canvas.style.cursor = 'grabbing'; // Húzáskor "megragadó" kéz
 });
+
+// MOBIL: Érintés kezdete
+canvas.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+        isDragging = true;
+        lastTouchX = e.touches[0].clientX;
+        lastTouchY = e.touches[0].clientY;
+        startDragX = lastTouchX;
+        startDragY = lastTouchY;
+    }
+}, { passive: false });
 
 window.addEventListener('mousemove', (e) => {
     if (isDragging) {
@@ -385,9 +398,33 @@ window.addEventListener('mousemove', (e) => {
 
         lastX = e.clientX; 
         lastY = e.clientY;
+        canvas.style.cursor = 'grabbing';
         drawMap();
     }
 });
+
+canvas.addEventListener('touchmove', (e) => {
+    if (isDragging && e.touches.length === 1) {
+        e.preventDefault(); // Megállítja az oldal görgetését
+        
+        const touchX = e.touches[0].clientX;
+        const touchY = e.touches[0].clientY;
+        
+        mapOffsetX += touchX - lastTouchX;
+        mapOffsetY += touchY - lastTouchY;
+
+        // Ugyanazok a határok mobilra is
+        if (mapOffsetX < -500) mapOffsetX = -500;
+        if (mapOffsetX > window.innerWidth + 500) mapOffsetX = window.innerWidth + 500;
+        if (mapOffsetY < -1500) mapOffsetY = -1500;
+        if (mapOffsetY > 500) mapOffsetY = 500;
+
+        lastTouchX = touchX;
+        lastTouchY = touchY;
+        
+        drawMap();
+    }
+}, { passive: false });
 
 window.addEventListener('mouseup', (e) => {
     if (isDragging) {
@@ -395,7 +432,23 @@ window.addEventListener('mouseup', (e) => {
         if (moveDist < 5) handleMapClick(e.clientX, e.clientY);
     }
     isDragging = false;
+    canvas.style.cursor = isBuilding ? 'crosshair' : 'default';
 });
+
+function handleDrag(dx, dy) {
+    mapOffsetX += dx;
+    mapOffsetY += dy;
+
+    // Kamera korlátok (Bounds)
+    if (mapOffsetX < -500) mapOffsetX = -500;
+    if (mapOffsetX > window.innerWidth + 500) mapOffsetX = window.innerWidth + 500;
+    if (mapOffsetY < -1500) mapOffsetY = -1500;
+    if (mapOffsetY > 500) mapOffsetY = 500;
+
+    drawMap();
+}
+
+
 
 function handleMapClick(mouseX, mouseY) {
     let mx = mouseX - mapOffsetX;
@@ -423,7 +476,7 @@ function handleMapClick(mouseX, mouseY) {
                 health: 999 
             };
 
-            set(ref(db, `islands/${currentPlayer}/${key}`), { type: isBuilding.type, health: 999 });
+            set(ref(db, `islands/${currentPlayer}/${key}`), buildingData);
             isBuilding = null;
         } else {
             alert("Ide nem építhetsz!");

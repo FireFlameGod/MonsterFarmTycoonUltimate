@@ -42,13 +42,6 @@ Object.keys(fileNames).forEach(key => {
     images[key].onload = () => { if (currentPlayer) drawMap(); };
 });
 
-// Csak akkor rajzolunk újra, ha a kép betöltődött
-grassImg.onload = function() {
-    console.log("Fű textúra betöltve!");
-    drawMap();
-};
-images.grass = grassImg;
-
 
 // SZIGET TÉRKÉP (1 = Fű, 0 = Víz)
 const mapData = [

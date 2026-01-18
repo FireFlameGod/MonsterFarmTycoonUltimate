@@ -919,6 +919,21 @@ window.onload = function() {
 };
 
 
-window.logout = function() { localStorage.clear(); location.reload(); };
+window.logout = async function() {
+    // 1. Időpont mentése Firebase-be a kilépés előtt
+    if (typeof currentPlayer !== 'undefined' && currentPlayer) {
+        try {
+            // Beállítjuk az utolsó aktivitást a mostani időre
+            await set(ref(db, `users/${currentPlayer}/lastActive`), Date.now());
+            console.log("Kijelentkezési idő elmentve.");
+        } catch (error) {
+            console.error("Hiba az idő mentésekor:", error);
+        }
+    }
+
+    // 2. A korábbi tisztítási logika
+    localStorage.clear(); 
+    location.reload(); 
+};
 function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; drawMap(); }
 window.addEventListener('resize', resizeCanvas);

@@ -151,12 +151,17 @@ window.addEventListener('mousemove', (e) => {
         
         mapOffsetX += deltaX;
         mapOffsetY += deltaY;
+
+        const limitX = (mapSize * tileW) / 2 + 300;
+        const limitY = (mapSize * tileH) / 2 + 300;
         // Kamera korlát (Bound) - nem engedi elveszni a szigetet
         const screenLimit = 1000; 
-        if (mapOffsetX < -screenLimit) mapOffsetX = -screenLimit;
-        if (mapOffsetX > window.innerWidth + screenLimit) mapOffsetX = window.innerWidth + screenLimit;
-        if (mapOffsetY < -screenLimit) mapOffsetY = -screenLimit;
-        if (mapOffsetY > window.innerHeight + screenLimit) mapOffsetY = window.innerHeight + screenLimit;
+        if (mapOffsetX < -limitX) mapOffsetX = -limitX;
+        if (mapOffsetX > window.innerWidth + limitX) mapOffsetX = window.innerWidth + limitX;
+        
+        // Függőleges korlát (Így már nem lesz végtelen fekete rész fent)
+        if (mapOffsetY < -limitY) mapOffsetY = -limitY;
+        if (mapOffsetY > window.innerHeight + limitY) mapOffsetY = window.innerHeight + limitY;
 
         lastX = e.clientX; 
         lastY = e.clientY;
@@ -234,7 +239,7 @@ function startGame(user) {
     document.getElementById('player-name').innerText = user;
 
     mapOffsetX = window.innerWidth / 2;
-    mapOffsetY = 100;
+    mapOffsetY = window.innerHeight / 2 - (mapSize * tileH / 2);
 
     resizeCanvas(); 
     onValue(ref(db, `users/${user}`), (snap) => {

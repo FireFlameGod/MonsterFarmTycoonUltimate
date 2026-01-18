@@ -211,6 +211,16 @@ window.removeWorker = function(key) {
 };
 
 
+// Inventory ablak nyitás/csukás
+window.toggleInventory = function() {
+    const win = document.getElementById('inventory-window');
+    const isOpen = win.style.display === 'flex';
+    win.style.display = isOpen ? 'none' : 'flex';
+    
+    if (!isOpen) {
+        refreshInventoryUI();
+    }
+};
 
 window.switchInvTab = function(tabId) {
     currentInvTab = tabId;
@@ -225,6 +235,8 @@ window.switchInvTab = function(tabId) {
     
     refreshInventoryUI();
 };
+
+
 
 window.refreshInventoryUI = async function() {
     const listContainer = document.getElementById('inventory-list');
@@ -343,54 +355,8 @@ function getNpcStats() {
     };
 }
 
-// Inventory ablak nyitás/csukás
-window.toggleInventory = function() {
-    const win = document.getElementById('inventory-window');
-    const isOpen = win.style.display === 'flex';
-    win.style.display = isOpen ? 'none' : 'flex';
-    
-    if (!isOpen) {
-        refreshInventoryUI();
-    }
-};
 
-// UI frissítése az ikonokkal
-async function refreshInventoryUI() {
-    const invContainer = document.getElementById('inventory-items');
-    if (!invContainer) return;
-    invContainer.innerHTML = ""; // Ablak ürítése
 
-    const snap = await get(ref(db, `users/${currentPlayer}/inventory`));
-    const inv = snap.val() || {};
-
-    // Ezeket a kulcsokat keressük az adatbázisban (amiknek van ikonja)
-    const displayItems = [
-        { id: 'fish', name: 'Hal' },
-        { id: 'fish2', name: 'Aranyhal' },
-        { id: 'fish3', name: 'Kék hal' },
-        { id: 'kraken', name: 'Kraken' },
-        { id: 'green_jade', name: 'Zöld Jade' },
-        { id: 'purple_jade', name: 'Lila Jade' }
-    ];
-
-    displayItems.forEach(item => {
-        const count = inv[item.id] || 0;
-        const itemDiv = document.createElement('div');
-        itemDiv.className = "inventory-slot"; // Új CSS osztály a rácshoz
-        
-        // Ha nincs belőle, legyen szürkébb
-        const opacity = count > 0 ? "1" : "0.3";
-
-        itemDiv.innerHTML = `
-            <div style="opacity: ${opacity}; display: flex; flex-direction: column; align-items: center;">
-                <img src="${fileNames[item.id]}" style="width: 45px; height: 45px; object-fit: contain;">
-                <span style="font-size: 11px; font-weight: bold; margin-top: 5px;">${count}</span>
-            </div>
-        `;
-        
-        invContainer.appendChild(itemDiv);
-    });
-}
 
 
 

@@ -559,7 +559,17 @@ window.onload = function() {
         document.getElementById('password').value = p;
         window.loginOrRegister();
     }
+
+    const startBtn = document.getElementById('login-start-btn'); 
+    if (startBtn) {
+        // A 'pointerdown' azonnal reagál érintésre, nem vár 300ms-ot mint a klikk
+        startBtn.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            window.loginOrRegister();
+        });
+    }
 };
+
 
 window.logout = function() { localStorage.clear(); location.reload(); };
 function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; drawMap(); }

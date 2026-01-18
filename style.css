@@ -57,16 +57,17 @@ button:hover { background: #2ecc71; }
 /* --- UI / HUD --- */
 #ui-layer {
     position: fixed;
-    top: 10px;
-    left: 10px;
-    right: 10px;
-    display: none; /* Marad alapból rejtve */
-    flex-direction: row; /* Kényszerített vízszintes sor */
-    align-items: flex-start;
-    justify-content: flex-start;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw;
+    padding: 10px;
+    display: flex !important; /* Kényszerített flex */
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 8px;
+    z-index: 99999 !important; /* Maximális rétegrend */
     pointer-events: none;
-    z-index: 1000; /* Legyen elég magas, hogy minden felett legyen */
+    background: rgba(0,0,0,0.2); /* Halvány háttér, hogy lásd, ott van-e */
 }
 
 #login-screen button {

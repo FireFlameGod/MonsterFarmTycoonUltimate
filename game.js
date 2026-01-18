@@ -195,7 +195,11 @@ window.removeWorker = function(key) {
 };
 
 
-
+function gameLoop() {
+    drawMap();
+    requestAnimationFrame(gameLoop);
+}
+gameLoop();
 
 
 async function sendDiscordMessage(msg) {
@@ -287,7 +291,11 @@ function createInitialIsland(userId) {
 
 function drawMap() {
     if (!ctx || !currentPlayer || !mapData || mapData.length === 0) return;
-
+    if (!currentPlayer || !mapData || mapData.length === 0) {
+        ctx.fillStyle = "blue"; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        return;
+    }
     ctx.save();
     // Ez törli a teljes vásznat, bárhol is járjon a kamera
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -443,10 +451,13 @@ canvas.addEventListener('touchmove', (e) => {
     }
 }, { passive: false });
 
-window.addEventListener('mouseup', (e) => {
+// Töröld a régi mouseup-ot és használd ezt:
+canvas.addEventListener('pointerup', (e) => {
     if (isDragging) {
         let moveDist = Math.hypot(e.clientX - startDragX, e.clientY - startDragY);
-        if (moveDist < 10) handleMapClick(e.clientX, e.clientY);
+        if (moveDist < 15) {
+            handleMapClick(e.clientX, e.clientY);
+        }
     }
     isDragging = false;
     canvas.style.cursor = isBuilding ? 'crosshair' : 'default';

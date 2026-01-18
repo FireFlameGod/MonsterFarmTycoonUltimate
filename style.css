@@ -1,170 +1,73 @@
 body {
-    background-color: #000;
+    background-color: #2c3e50;
     color: white;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0; padding: 0;
     overflow: hidden;
-    touch-action: none; /* Megakadályozza a mobil böngésző alapértelmezett zoomolását */
+    touch-action: none;
 }
 
-/* --- LOGIN SCREEN --- */
 #login-screen {
-    position: fixed;
+    position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(20, 30, 48, 0.95);
-    padding: 40px;
-    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.9);
+    padding: 30px;
+    border-radius: 15px;
     text-align: center;
-    width: 85%;
-    max-width: 380px;
-    z-index: 9999;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    width: 90%; max-width: 350px;
+    z-index: 2000;
+    display: flex; flex-direction: column; gap: 10px;
 }
 
-#login-screen input {
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #34495e;
-    background: #1c2833;
-    color: white;
-    font-size: 16px;
+#login-start-btn {
+    background: #27ae60 !important;
+    color: white !important;
+    width: 100% !important;
+    padding: 15px !important;
+    font-size: 20px !important;
+    cursor: pointer;
 }
 
-/* --- GAME CANVAS --- */
-#game-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    display: block;
-    z-index: 1;
-    background: #000;
-}
+#game-canvas { display: block; background: #000; width: 100vw; height: 100vh; }
 
-/* --- UI LAYER (HUD) --- */
 #ui-layer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    padding: 15px;
-    z-index: 100;
-    display: none; /* game.js teszi majd láthatóvá */
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 10px;
-    pointer-events: none; /* Átengedi a kattintást a canvas-ra */
-    box-sizing: border-box;
+    position: fixed; top: 0; left: 0; width: 100vw;
+    padding: 10px; display: flex; gap: 8px;
+    z-index: 1500; pointer-events: none;
 }
 
-#ui-layer > * {
-    pointer-events: auto; /* A gombok és dobozok viszont kattinthatóak */
-}
+#ui-layer > * { pointer-events: auto; }
 
 .res-box, .player-info {
-    background: rgba(44, 62, 80, 0.9);
-    padding: 8px 15px;
-    border-radius: 10px;
-    font-weight: bold;
-    border-bottom: 3px solid #f1c40f;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    font-size: 14px;
+    padding: 6px 12px; background: rgba(0, 0, 0, 0.7);
+    border-radius: 5px; border-bottom: 3px solid #2ecc71;
+    font-weight: bold; font-size: 14px;
 }
 
-button {
-    cursor: pointer;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    transition: transform 0.1s, background 0.2s;
-}
+.shop-btn { background: #f1c40f; color: black; padding: 6px 15px; }
 
-button:active { transform: scale(0.95); }
-
-.shop-btn {
-    background: #f1c40f;
-    color: #000;
-    padding: 8px 20px;
-}
-
-.logout-btn {
-    background: #e74c3c;
-    color: white;
-    padding: 8px 15px;
-    margin-left: auto; /* Jobbra tolja a gombot */
-}
-
-/* --- MODALS --- */
 .modal {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background: rgba(0,0,0,0.85);
-    z-index: 1000;
-    display: none;
-    align-items: center;
-    justify-content: center;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8); z-index: 3000;
+    display: none; align-items: center; justify-content: center;
 }
 
 .modal-content {
-    background: #2c3e50;
-    padding: 30px;
-    border-radius: 20px;
-    width: 90%;
-    max-width: 400px;
+    background: #2c3e50; padding: 20px; border: 3px solid #f1c40f;
+    border-radius: 15px; width: 90%; max-width: 350px; text-align: center;
     position: relative;
-    border: 3px solid #f1c40f;
-    color: white;
-    text-align: center;
 }
 
-.close {
-    position: absolute;
-    right: 20px; top: 15px;
-    font-size: 30px;
-    color: #bdc3c7;
-    cursor: pointer;
-}
-
-/* --- BOLT ELEMEK --- */
 .shop-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #34495e;
-    padding: 12px;
-    border-radius: 12px;
-    margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(255,255,255,0.1); padding: 10px; margin-bottom: 5px; border-radius: 8px;
 }
 
-.shop-item button {
-    background: #27ae60;
-    color: white;
-    padding: 5px 15px;
-}
+.shop-item img { width: 60px; height: 60px; }
 
-/* --- CHEAT GOMB --- */
-.cheat-btn {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #e67e22;
-    color: white;
-    padding: 12px 20px;
-    z-index: 500;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-}
+.close { position: absolute; right: 15px; top: 5px; font-size: 30px; cursor: pointer; color: #f1c40f; }
 
-/* --- MOBIL FINOMHANGOLÁS --- */
-@media (max-width: 600px) {
-    .player-info { display: none; } /* Kicsi kijelzőn elrejtjük a nevet */
-    #ui-layer { padding: 10px; gap: 5px; }
-    .res-box { font-size: 12px; padding: 6px 10px; }
-    .logout-btn { padding: 6px 10px; font-size: 12px; }
-}
+.logout-btn { background: #e74c3c; color: white; margin-left: auto; padding: 6px 15px; }
+
+.error { color: #e74c3c; display: none; font-weight: bold; }

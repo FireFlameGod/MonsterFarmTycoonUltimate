@@ -152,13 +152,12 @@ button:hover { background: #2ecc71; }
     right: 20px;
     background: #e67e22;
     color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 5px;
+    padding: 10px 15px;
+    border-radius: 8px;
+    z-index: 3000; /* Legyen magasabb mindennél */
     cursor: pointer;
-    opacity: 0.7;
-    z-index: 1000;
-    display: none; /* Fontos: alapból ez is rejtve! */
+    font-weight: bold;
+    border: 2px solid #d35400;
 }
 .cheat-btn:hover {
     opacity: 1;

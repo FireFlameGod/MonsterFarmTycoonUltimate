@@ -320,8 +320,8 @@ async function startGame(user) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('ui-layer').style.display = 'flex'; 
     document.getElementById('player-name').innerText = user;
-    const cheatBtn = document.querySelector('.cheat-btn');
-    
+    const cheatBtn = document.getElementById('admin-cheat-btn');
+
     try {
         const userSnap = await get(ref(db, `users/${user}`));
         if (!userSnap.val().hasIsland) {

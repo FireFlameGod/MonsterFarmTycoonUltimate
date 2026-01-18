@@ -177,7 +177,7 @@ function drawMap() {
                     } 
                     else if (obj.type === 'rock') {
                         scale = 0.9;
-                        yOffset = 45;
+                        yOffset = 40;
                     } 
                     else if (obj.type === 'house') {
                         scale = 4.0;    // Itt növeld a ház méretét

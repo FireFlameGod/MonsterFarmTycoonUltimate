@@ -550,10 +550,10 @@ function drawMap() {
                             let anim = Math.sin(Date.now() / 250); 
                             
                             // Ugrás: csak a hullám pozitív részében ugrik fel
-                            bounce = Math.max(0, anim) * (5 * gameZoom);
+                            bounce = Math.max(0, anim) * (2 * gameZoom);
                             
                             // Rugalmasság: -10 és +10 pixel között változik a zoom függvényében
-                            let strength = 20 * gameZoom;
+                            let strength = 5 * gameZoom;
                             squashW = -anim * strength; 
                             squashH = anim * strength;
                         }

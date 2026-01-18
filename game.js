@@ -62,8 +62,12 @@ function generateMap() {
             } else {
                 mapData[y][x] = (Math.random() < 0.15) ? 2 : 1; 
                 let rand = Math.random();
-                if (rand < 0.10) objectData[y][x] = { type: 'tree', health: 3 };
-                else if (rand < 0.05) objectData[y][x] = { type: 'rock', health: 5 };
+                // Megemeltem az esélyeket, hogy biztosan láss köveket is
+                if (rand < 0.12) {
+                    objectData[y][x] = { type: 'tree', health: 3 };
+                } else if (rand < 0.20) { // Most már több kő lesz
+                    objectData[y][x] = { type: 'rock', health: 5 };
+                }
             }
         }
     }
@@ -101,10 +105,10 @@ function drawMap() {
                 let obj = objectData[y][x];
                 if (obj && images[obj.type].complete) {
                     let img = images[obj.type];
-                    let scale = 0.8;
-                    let w = tileW * scale;
+                    let scale = (obj.type === 'tree') ? 1.0 : 0.7; // A fa nagyobb (1.0), a kő kisebb (0.7)
+                    let yOffset = (obj.type === 'tree') ? 15 : 10; // Ezzel tudod lejjebb tolni (pixelben)
                     let h = (img.height * (w / img.width));
-                    ctx.drawImage(img, screenX - w/2, screenY - h + (tileH/1.5), w, h);
+                    ctx.drawImage(img, screenX - w/2, screenY - h + (tileH / 2) + yOffset, w, h);
                 }
             }
         }

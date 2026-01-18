@@ -189,11 +189,9 @@ function handleMapClick(mouseX, mouseY) {
         if (target) {
             target.health--;
             
-            // --- RÁZKÓDÁS BEKAPCSOLÁSA ---
+            // Rázkódás effekt
             target.isShaking = true;
-            drawMap(); // Azonnali frissítés, hogy látszódjon az ütés
-
-            // 100ms után leállítjuk a rázkódást
+            drawMap();
             setTimeout(() => {
                 if (objectData[ty] && objectData[ty][tx]) {
                     objectData[ty][tx].isShaking = false;
@@ -201,13 +199,24 @@ function handleMapClick(mouseX, mouseY) {
                 }
             }, 100);
 
-            console.log(`Találat! ${target.type} maradék élet: ${target.health}`);
-            
             if (target.health <= 0) {
-                let reward = (target.type === 'tree' ? 10 : 20);
-                update(ref(db, `users/${currentPlayer}`), { money: increment(reward) });
+                let isTree = (target.type === 'tree');
+                
+                // Jutalmak meghatározása
+                let moneyReward = isTree ? 10 : 20;
+                let woodReward = isTree ? 5 : 0;
+                let stoneReward = isTree ? 0 : 3;
+
+                // Firebase frissítés (egyszerre az összes érték)
+                update(ref(db, `users/${currentPlayer}`), {
+                    money: increment(moneyReward),
+                    wood: increment(woodReward),
+                    stone: increment(stoneReward)
+                });
+
                 objectData[ty][tx] = null;
             }
+            drawMap();
         }
     }
 }
@@ -241,8 +250,14 @@ function startGame(user) {
     mapOffsetY = window.innerHeight / 2 - (mapSize * tileH / 4);
 
     resizeCanvas(); 
-    onValue(ref(db, `users/${user}/money`), (snap) => {
-        document.getElementById('money-display').innerText = snap.val();
+    // Összes érték figyelése Firebase-ből
+    onValue(ref(db, `users/${user}`), (snap) => {
+        const data = snap.val();
+        if (data) {
+            document.getElementById('money-display').innerText = data.money || 0;
+            document.getElementById('wood-display').innerText = data.wood || 0;
+            document.getElementById('stone-display').innerText = data.stone || 0;
+        }
     });
 }
 

@@ -21,8 +21,8 @@ const ctx = canvas.getContext('2d');
 let currentPlayer = null;
 
 // Térkép beállítások
-const tileW = 64; 
-const tileH = 32; 
+const tileW = 128; 
+const tileH = 64; 
 let mapOffsetX = window.innerWidth / 2; 
 let mapOffsetY = 150;
 

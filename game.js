@@ -172,7 +172,7 @@ function drawMap() {
 
                     // EGYEDI BEÁLLÍTÁSOK TÍPUSONKÉNT
                     if (obj.type === 'tree') {
-                        scale = 2.0;
+                        scale = 1.3;
                         yOffset = 40;
                     } 
                     else if (obj.type === 'rock') {

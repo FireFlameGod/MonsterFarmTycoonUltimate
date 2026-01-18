@@ -241,7 +241,7 @@ function startGame(user) {
     document.getElementById('player-name').innerText = user;
 
     mapOffsetX = window.innerWidth / 2;
-    mapOffsetY = window.innerHeight / 2 - (mapSize * tileH / 2);
+    mapOffsetY = window.innerHeight / 2 - (mapSize * tileH / 4);
 
     resizeCanvas(); 
     onValue(ref(db, `users/${user}`), (snap) => {

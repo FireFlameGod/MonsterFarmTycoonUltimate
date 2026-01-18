@@ -58,37 +58,27 @@ button:hover { background: #2ecc71; }
 /* --- UI / HUD --- */
 #ui-layer {
     position: fixed;
-    top: 0; left: 0; 
-    width: 100%; 
-    height: 60px;
-    background: #2d5a27;
-    display: none; /* JS flex-re váltja */
-    align-items: center;
-    padding: 0 20px;
-    box-sizing: border-box;
-    border-bottom: 3px solid #1e3d1a;
-    z-index: 1000;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    pointer-events: auto;
-}
-
-.res-box {
-    margin-right: 15px;
-    background: rgba(0,0,0,0.4);
-    padding: 8px 15px;
-    border-radius: 10px;
+    top: 10px;
+    left: 10px;
+    right: 10px;
     display: flex;
-    align-items: center;
+    flex-wrap: wrap; /* Ha nem fér el egy sorban, tördeli */
     gap: 8px;
-    font-weight: bold;
-    border: 1px solid rgba(255,255,255,0.1);
+    pointer-events: none; /* Átlátszó az egérnek a gombok között */
+    z-index: 100;
 }
 
-.player-info { 
-    margin-right: 25px; 
-    font-weight: bold; 
-    color: #f1c40f;
-    text-shadow: 1px 1px 2px black;
+#ui-layer > * {
+    pointer-events: auto; /* A gombok viszont maradjanak kattinthatóak */
+}
+
+.res-box, .player-info {
+    padding: 5px 10px;
+    font-size: 14px;
+    background: rgba(44, 62, 80, 0.9);
+    border-radius: 5px;
+    border-bottom: 2px solid #3498db;
+    white-space: nowrap;
 }
 
 .shop-btn {
@@ -217,6 +207,19 @@ button:hover { background: #2ecc71; }
 }
 
 
+/* Fekvő mód és kis kijelző finomhangolása */
+@media (max-height: 500px) {
+    #ui-layer {
+        top: 5px;
+        gap: 5px;
+    }
+    .res-box, .player-info, .shop-btn, .logout-btn {
+        font-size: 12px;
+        padding: 4px 8px;
+    }
+    /* Elrejtjük a nevet fekvő módban, ha túl kicsi a hely */
+    .player-info { display: none; } 
+}
 
 /* --- KILÉPÉS GOMB FIX --- */
 /* Itt a javítás: .logout-btn-t használunk a sima button helyett */

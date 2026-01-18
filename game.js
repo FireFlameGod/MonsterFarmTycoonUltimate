@@ -203,8 +203,15 @@ function resizeCanvas() {
     canvas.style.height = window.innerHeight + 'px';
     ctx.scale(ratio, ratio);
     
-    // Mobilon kicsit távolítjuk a kamerát automatikusan
-    gameZoom = window.innerWidth < 600 ? 0.6 : 1.0;
+    let minDimension = Math.min(window.innerWidth, window.innerHeight);
+
+    if (window.innerWidth > window.innerHeight) {
+        // FEKVŐ MÓD: Még kisebb zoom kell, mert alacsony a kijelző
+        gameZoom = minDimension < 500 ? 0.4 : 0.7;
+    } else {
+        // ÁLLÓ MÓD: Maradhat a korábbi
+        gameZoom = minDimension < 600 ? 0.6 : 1.0;
+    }
     
     drawMap();
 }

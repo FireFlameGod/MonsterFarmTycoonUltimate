@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sziget Tycoon Pre-Alpha</title>
+    <style>
+        body {
+            background-color: #2c3e50; /* Sötét tenger szín */
+            color: white;
+            font-family: sans-serif;
+            text-align: center;
+            overflow: hidden; /* Hogy ne lehessen görgetni */
+            margin: 0;
+        }
+        #game-container {
+            margin-top: 50px;
+        }
+        .btn {
+            background: #e67e22;
+            border: none;
+            padding: 15px 30px;
+            font-size: 20px;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #d35400;
+        }
+        .btn:active {
+            box-shadow: none;
+            transform: translateY(4px);
+        }
+        #player-count {
+            color: #f1c40f;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🏝️ Sziget Tycoon Teszt</h1>
+    <p>Jelenleg <span id="player-count">0</span> játékos van itt.</p>
+    
+    <div id="game-container">
+        <button class="btn" onclick="testConnection()">Klikk a teszthez!</button>
+        <p id="status-msg">Várakozás a Firebase-re...</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // --- IDE MÁSOLD BE A SAJÁT FIREBASE CONFIGODAT! ---
+        // (A const firebaseConfig = { ... } részt)
+        const firebaseConfig = {
+
+                      apiKey: "AIzaSyA-MauYrQl5WZ4TPv53vNxuUFnW3dEG0Z8",
+                    
+                      authDomain: "monsterfarmtycoonultimate.firebaseapp.com",
+                    
+                      databaseURL: "https://monsterfarmtycoonultimate-default-rtdb.europe-west1.firebasedatabase.app",
+                    
+                      projectId: "monsterfarmtycoonultimate",
+                    
+                      storageBucket: "monsterfarmtycoonultimate.firebasestorage.app",
+                    
+                      messagingSenderId: "621935486358",
+                    
+                      appId: "1:621935486358:web:ac7d20b0beb3933f64e9b7"
+
+        };
+
+        // --------------------------------------------------
+
+        // Inicializálás
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // 1. Teszt: Kapcsolat ellenőrzése
+        const connectedRef = ref(db, ".info/connected");
+        onValue(connectedRef, (snap) => {
+            if (snap.val() === true) {
+                document.getElementById("status-msg").innerText = "✅ Kapcsolódva a szerverhez!";
+                document.getElementById("status-msg").style.color = "#2ecc71";
+            } else {
+                document.getElementById("status-msg").innerText = "❌ Nincs kapcsolat...";
+            }
+        });
+
+        // 2. Teszt: Közös számláló
+        // Ez figyeli, ha BÁRKI kattint a világon
+        const counterRef = ref(db, 'teszt_adatok/kattintasok');
+        onValue(counterRef, (snapshot) => {
+            const data = snapshot.val() || 0;
+            document.getElementById("player-count").innerText = data;
+        });
+
+        // Ezt a függvényt tesszük elérhetővé a gombnak (globális térbe)
+        window.testConnection = function() {
+            // Növeljük a közös számlálót 1-gyel
+            update(ref(db, 'teszt_adatok'), {
+                kattintasok: increment(1)
+            });
+        };
+    </script>
+</body>
+</html>

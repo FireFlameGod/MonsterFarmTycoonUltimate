@@ -152,16 +152,18 @@ window.addEventListener('mousemove', (e) => {
         mapOffsetX += deltaX;
         mapOffsetY += deltaY;
 
-        const limitX = (mapSize * tileW) / 2 + 300;
-        const limitY = (mapSize * tileH) / 2 + 300;
-        // Kamera korlát (Bound) - nem engedi elveszni a szigetet
-        const screenLimit = 1000; 
-        if (mapOffsetX < -limitX) mapOffsetX = -limitX;
-        if (mapOffsetX > window.innerWidth + limitX) mapOffsetX = window.innerWidth + limitX;
-        
-        // Függőleges korlát (Így már nem lesz végtelen fekete rész fent)
-        if (mapOffsetY < -limitY) mapOffsetY = -limitY;
-        if (mapOffsetY > window.innerHeight + limitY) mapOffsetY = window.innerHeight + limitY;
+        const limitX = (mapSize * tileW) / 2;
+        const limitY = (mapSize * tileH) / 2;
+        const padding = 200; // Mennyi "feketét" lássunk még a szélén túl
+
+        if (nextX > -limitX + padding && nextX < window.innerWidth + limitX - padding) {
+            mapOffsetX = nextX;
+        }
+
+        // Függőleges korlát (Fel-Le)
+        if (nextY > -limitY + padding && nextY < window.innerHeight + limitY - padding) {
+            mapOffsetY = nextY;
+        }
 
         lastX = e.clientX; 
         lastY = e.clientY;

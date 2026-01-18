@@ -84,9 +84,8 @@ function drawMap() {
 
 function drawTile(x, y, type) {
     if (type === 1) {
-        // FŰ (Kép rajzolása)
-        // A drawImage bal-fenti sarkot kér, de az x,y nálunk a tile csúcsa (közép-fent).
-        // Ezért eltoljuk balra a szélesség felével.
+        ctx.strokeStyle = "red";
+        ctx.strokeRect(x - tileW / 2, y, tileW, tileH);
         if (images.grass.complete) {
             ctx.drawImage(images.grass, x - tileW / 2, y, tileW, tileH);
         } else {

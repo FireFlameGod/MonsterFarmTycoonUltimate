@@ -19,7 +19,7 @@ body {
     text-align: center;
     width: 90%;
     max-width: 350px;
-    z-index: 2000; /* Legfelül legyen */
+    z-index: 2000;
     box-shadow: 0 0 20px rgba(0,0,0,0.8);
     display: flex; 
     flex-direction: column; 
@@ -28,35 +28,48 @@ body {
 
 h1 { color: #f1c40f; margin: 0 0 10px 0; }
 input { width: 100%; padding: 12px; border-radius: 8px; border: none; box-sizing: border-box; font-size: 16px; }
-button { background: #27ae60; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 18px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.2s; }
+
+/* Általános gomb stílus (ez vonatkozik a Startra) */
+button { 
+    background: #27ae60; 
+    color: white; 
+    border: none; 
+    padding: 12px; 
+    border-radius: 8px; 
+    font-size: 18px; 
+    cursor: pointer; 
+    font-weight: bold; 
+    width: 100%; 
+    transition: 0.2s; 
+}
 button:hover { background: #2ecc71; }
 .error { color: #e74c3c; display: none; font-weight: bold; }
 
 /* --- JÁTÉK VÁSZON --- */
 #game-canvas {
     display: block;
-    background-color: #000; /* Fekete háttér a víz körül */
+    background-color: #000;
     width: 100vw;
     height: 100vh;
     cursor: grab;
 }
 #game-canvas:active { cursor: grabbing; }
 
-/* --- UI / HUD (FELSŐ ZÖLD SÁV) --- */
+/* --- UI / HUD --- */
 #ui-layer {
-    position: fixed; /* Fixen a tetején */
+    position: fixed;
     top: 0; left: 0; 
     width: 100%; 
-    height: 60px; /* Megemeltem kicsit a kényelem miatt */
-    background: #2d5a27; /* Szilárd zöld szín, amit kértél */
-    display: none; /* JS kapcsolja flex-re */
+    height: 60px;
+    background: #2d5a27;
+    display: none; /* JS flex-re váltja */
     align-items: center;
     padding: 0 20px;
     box-sizing: border-box;
     border-bottom: 3px solid #1e3d1a;
     z-index: 1000;
     box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-    pointer-events: auto; /* Itt engedjük az interakciót */
+    pointer-events: auto;
 }
 
 .res-box {
@@ -78,29 +91,17 @@ button:hover { background: #2ecc71; }
     text-shadow: 1px 1px 2px black;
 }
 
-button { 
-    background: #27ae60; 
-    color: white; 
-    border: none; 
-    padding: 12px; 
-    border-radius: 8px; 
-    font-size: 18px; 
-    cursor: pointer; 
-    font-weight: bold; 
-    width: 100%; /* Ez nyújtja ki a login gombot */
-    transition: 0.2s; 
-}
-
-/* --- Speciális Kilépés Gomb Fix --- */
-#ui-layer button#logout-btn { 
-    width: auto !important; /* KÖTELEZŐEN csak akkora legyen, amekkora a szöveg */
-    min-width: 80px;
+/* --- KILÉPÉS GOMB FIX --- */
+/* Itt a javítás: .logout-btn-t használunk a sima button helyett */
+#ui-layer .logout-btn { 
+    width: auto !important; 
+    min-width: 100px;
     padding: 8px 15px;
     font-size: 14px;
     margin-left: auto;
     background: #c0392b;
-    display: inline-flex; /* Megakadályozza a sor kitöltését */
+    display: inline-flex;
     align-items: center;
     justify-content: center;
 }
-#logout-btn:hover { background: #e74c3c; }
+#ui-layer .logout-btn:hover { background: #e74c3c; }

@@ -234,14 +234,15 @@ function getNpcStats() {
     Object.values(objectData).forEach(obj => {
         // A ház adja a férőhelyet
         if (obj.type === 'house') {
-            totalCapacity += (obj.lvl === 1 ? 2 : 4); // Lvl 1: 2 slot, Lvl 2: 4 slot
+            // Ha lvl 1 -> 2, ha lvl 2 -> 4
+            let capacity = (obj.lvl === 2) ? 4 : 2; 
+            totalCapacity += capacity;
         }
-        // Megszámoljuk a dolgozókat a bányákban és hajókon
+        // Dolgozók összeszámolása
         if (obj.type === 'mine' || obj.type === 'boat') {
             currentlyWorking += (obj.workers || 0);
         }
     });
-
     return {
         total: totalCapacity,
         busy: currentlyWorking,

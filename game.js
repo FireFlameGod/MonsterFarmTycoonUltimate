@@ -255,8 +255,6 @@ window.refreshInventoryUI = async function() {
             { id: 'kraken', name: 'Kraken' }
         ],
         ores: [
-            { id: 'iron_ore', name: 'Vasérc' },
-            { id: 'gold_ore', name: 'Aranyérc' },
             { id: 'green_jade', name: 'Zöld Jade' },
             { id: 'purple_jade', name: 'Lila Jade' }
         ]

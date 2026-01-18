@@ -189,7 +189,7 @@ function drawMap() {
                     } 
                     else if (obj.type === 'boat') {
                         scale = 2.0;
-                        yOffset = 90;   // A hajó kevesebb offsetet kap, hogy a vízben üljön
+                        yOffset = 100;   // A hajó kevesebb offsetet kap, hogy a vízben üljön
                     }
 
                     // Kiszámoljuk a szélességet és magasságot az új scale alapján

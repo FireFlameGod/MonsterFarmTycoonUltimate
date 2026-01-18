@@ -444,7 +444,7 @@ canvas.addEventListener('touchmove', (e) => {
 window.addEventListener('mouseup', (e) => {
     if (isDragging) {
         let moveDist = Math.hypot(e.clientX - startDragX, e.clientY - startDragY);
-        if (moveDist < 5) handleMapClick(e.clientX, e.clientY);
+        if (moveDist < 10) handleMapClick(e.clientX, e.clientY);
     }
     isDragging = false;
     canvas.style.cursor = isBuilding ? 'crosshair' : 'default';

@@ -60,11 +60,13 @@ button:hover { background: #2ecc71; }
     top: 10px;
     left: 10px;
     right: 10px;
-    display: none; /* <--- EZT ÍRD ÁT: Alapból rejtve, a startGame teszi majd flex-re */
-    flex-wrap: wrap;
+    display: none; /* Marad alapból rejtve */
+    flex-direction: row; /* Kényszerített vízszintes sor */
+    align-items: flex-start;
+    justify-content: flex-start;
     gap: 8px;
     pointer-events: none;
-    z-index: 100;
+    z-index: 1000; /* Legyen elég magas, hogy minden felett legyen */
 }
 
 #login-screen button {
@@ -80,8 +82,8 @@ button:hover { background: #2ecc71; }
 }
 
 .res-box, .player-info {
-    padding: 5px 10px;
-    font-size: 14px;
+    padding: 4px 8px;
+    font-size: 13px; /* Kicsit csökkentve */
     background: rgba(44, 62, 80, 0.9);
     border-radius: 5px;
     border-bottom: 2px solid #3498db;

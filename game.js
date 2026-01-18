@@ -287,9 +287,12 @@ function createInitialIsland(userId) {
 
 function drawMap() {
     if (!ctx) return;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0); 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#000000"; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
 
     for (let y = 0; y < mapSize; y++) {
         for (let x = 0; x < mapSize; x++) {
@@ -463,8 +466,8 @@ function handleDrag(dx, dy) {
 
 
 function handleMapClick(mouseX, mouseY) {
-    let mx = mouseX - mapOffsetX;
-    let my = mouseY - mapOffsetY;
+    let mx = (mouseX - mapOffsetX) / gameZoom;
+    let my = (mouseY - mapOffsetY) / gameZoom;
     let tx = Math.floor((my / (tileH / 2) + mx / (tileW / 2)) / 2);
     let ty = Math.floor((my / (tileH / 2) - mx / (tileW / 2)) / 2);
     const key = `${ty}_${tx}`;

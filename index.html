@@ -3,104 +3,250 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sziget Tycoon Pre-Alpha</title>
+    <title>Monster Farm Tycoon - Belépés</title>
     <style>
         body {
-            background-color: #2c3e50; /* Sötét tenger szín */
+            background-color: #2c3e50;
             color: white;
-            font-family: sans-serif;
-            text-align: center;
-            overflow: hidden; /* Hogy ne lehessen görgetni */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
         }
-        #game-container {
-            margin-top: 50px;
+
+        /* --- 1. LOGIN KÉPERNYŐ STÍLUS --- */
+        #login-screen {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            width: 85%;
+            max-width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
-        .btn {
-            background: #e67e22;
+        
+        h1 { color: #f1c40f; margin-bottom: 0; }
+        p { color: #bdc3c7; margin-top: 5px; }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
             border: none;
-            padding: 15px 30px;
-            font-size: 20px;
+            box-sizing: border-box;
+            font-size: 16px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        button {
+            background: #27ae60;
             color: white;
-            border-radius: 10px;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 18px;
             cursor: pointer;
-            box-shadow: 0 4px 0 #d35400;
-        }
-        .btn:active {
-            box-shadow: none;
-            transform: translateY(4px);
-        }
-        #player-count {
-            color: #f1c40f;
+            width: 100%;
+            transition: 0.2s;
             font-weight: bold;
+        }
+        button:active { transform: scale(0.98); }
+        
+        .error { color: #e74c3c; font-weight: bold; display: none; }
+
+        /* --- 2. JÁTÉK KÉPERNYŐ (Alapból rejtve) --- */
+        #game-screen {
+            display: none; /* Ez rejti el induláskor! */
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        /* A felső menüsor (HUD) */
+        .hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0,0,0,0.6);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .stats { font-size: 18px; font-weight: bold; }
+        #money-display { color: #f1c40f; }
+
+        #logout-btn {
+            background: #c0392b;
+            width: auto;
+            padding: 8px 15px;
+            font-size: 14px;
+        }
+
+        /* Teszt gomb középre */
+        .center-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
-    <h1>🏝️ Sziget Tycoon Teszt</h1>
-    <p>Jelenleg <span id="player-count">0</span> játékos van itt.</p>
-    
-    <div id="game-container">
-        <button class="btn" onclick="testConnection()">Klikk a teszthez!</button>
-        <p id="status-msg">Várakozás a Firebase-re...</p>
+    <div id="login-screen">
+        <h1>🦖 Monster Farm</h1>
+        <p>Lépj be a szigetedre!</p>
+        
+        <input type="text" id="username" placeholder="Felhasználónév (pl. Pisti)">
+        <input type="password" id="password" placeholder="Jelszó">
+        
+        <button onclick="loginOrRegister()">Belépés / Start</button>
+        <div id="error-msg" class="error">Hibás jelszó!</div>
+        <p style="font-size: 12px; opacity: 0.7;">Ha új nevet írsz, automatikusan regisztrálunk.</p>
+    </div>
+
+    <div id="game-screen">
+        <div class="hud">
+            <div class="stats">
+                👤 <span id="player-name">Player</span><br>
+                💰 <span id="money-display">0</span> Ft
+            </div>
+            <button id="logout-btn" onclick="logout()">Kilépés</button>
+        </div>
+
+        <div class="center-content">
+            <h2>Üdv a farmodon!</h2>
+            <p>Ez itt a saját területed.</p>
+            <button onclick="addMoney()" style="background: #e67e22;">+50 Pénz (Klikk!)</button>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, get, child, update, increment, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // --- IDE MÁSOLD BE A SAJÁT FIREBASE CONFIGODAT! ---
-        // (A const firebaseConfig = { ... } részt)
+        // --- A TE SAJÁT CONFIGOD (Már beillesztve) ---
         const firebaseConfig = {
-
-                      apiKey: "AIzaSyA-MauYrQl5WZ4TPv53vNxuUFnW3dEG0Z8",
-                    
-                      authDomain: "monsterfarmtycoonultimate.firebaseapp.com",
-                    
-                      databaseURL: "https://monsterfarmtycoonultimate-default-rtdb.europe-west1.firebasedatabase.app",
-                    
-                      projectId: "monsterfarmtycoonultimate",
-                    
-                      storageBucket: "monsterfarmtycoonultimate.firebasestorage.app",
-                    
-                      messagingSenderId: "621935486358",
-                    
-                      appId: "1:621935486358:web:ac7d20b0beb3933f64e9b7"
-
+            apiKey: "AIzaSyA-MauYrQl5WZ4TPv53vNxuUFnW3dEG0Z8",
+            authDomain: "monsterfarmtycoonultimate.firebaseapp.com",
+            databaseURL: "https://monsterfarmtycoonultimate-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "monsterfarmtycoonultimate",
+            storageBucket: "monsterfarmtycoonultimate.firebasestorage.app",
+            messagingSenderId: "621935486358",
+            appId: "1:621935486358:web:ac7d20b0beb3933f64e9b7"
         };
+        // ----------------------------------------------
 
-        // --------------------------------------------------
-
-        // Inicializálás
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        let currentPlayer = null;
 
-        // 1. Teszt: Kapcsolat ellenőrzése
-        const connectedRef = ref(db, ".info/connected");
-        onValue(connectedRef, (snap) => {
-            if (snap.val() === true) {
-                document.getElementById("status-msg").innerText = "✅ Kapcsolódva a szerverhez!";
-                document.getElementById("status-msg").style.color = "#2ecc71";
-            } else {
-                document.getElementById("status-msg").innerText = "❌ Nincs kapcsolat...";
+        // --- 1. AUTOMATIKUS BELÉPÉS (Ha van mentett jelszó) ---
+        window.onload = function() {
+            const savedUser = localStorage.getItem('mf_user');
+            const savedPass = localStorage.getItem('mf_pass');
+
+            // Ha találunk mentett adatot, kitöltjük a mezőket és megpróbálunk belépni
+            if (savedUser && savedPass) {
+                document.getElementById('username').value = savedUser;
+                document.getElementById('password').value = savedPass;
+                loginOrRegister(); 
             }
-        });
+        };
 
-        // 2. Teszt: Közös számláló
-        // Ez figyeli, ha BÁRKI kattint a világon
-        const counterRef = ref(db, 'teszt_adatok/kattintasok');
-        onValue(counterRef, (snapshot) => {
-            const data = snapshot.val() || 0;
-            document.getElementById("player-count").innerText = data;
-        });
+        // --- 2. LOGIN / REGISZTRÁCIÓ LOGIKA ---
+        window.loginOrRegister = function() {
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
+            const errorDiv = document.getElementById('error-msg');
 
-        // Ezt a függvényt tesszük elérhetővé a gombnak (globális térbe)
-        window.testConnection = function() {
-            // Növeljük a közös számlálót 1-gyel
-            update(ref(db, 'teszt_adatok'), {
-                kattintasok: increment(1)
+            if (user === "" || pass === "") {
+                errorDiv.innerText = "Kérlek tölts ki minden mezőt!";
+                errorDiv.style.display = "block";
+                return;
+            }
+
+            const dbRef = ref(db);
+            // Megnézzük, létezik-e már a felhasználó
+            get(child(dbRef, `users/${user}`)).then((snapshot) => {
+                if (snapshot.exists()) {
+                    // --- LÉTEZIK: Jelszó ellenőrzés ---
+                    const userData = snapshot.val();
+                    if (userData.password === pass) {
+                        startGame(user);
+                    } else {
+                        errorDiv.innerText = "Hibás jelszó!";
+                        errorDiv.style.display = "block";
+                    }
+                } else {
+                    // --- NEM LÉTEZIK: Új fiók létrehozása ---
+                    set(ref(db, 'users/' + user), {
+                        username: user,
+                        password: pass,
+                        money: 100, // Kezdő pénz
+                        level: 1,
+                        joined: Date.now()
+                    }).then(() => {
+                        startGame(user);
+                    });
+                }
+            }).catch((error) => {
+                console.error(error);
+                errorDiv.innerText = "Hiba a kapcsolódáskor!";
+                errorDiv.style.display = "block";
             });
+        };
+
+        // --- 3. JÁTÉK INDÍTÁSA ---
+        function startGame(username) {
+            currentPlayer = username;
+            
+            // Lementjük a böngészőbe a belépést
+            localStorage.setItem('mf_user', username);
+            localStorage.setItem('mf_pass', document.getElementById('password').value);
+
+            // Képernyőcsere: Login eltűnik -> Játék megjelenik
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            
+            // Név kiírása
+            document.getElementById('player-name').innerText = username;
+
+            // ADATOK FOLYAMATOS FIGYELÉSE (Realtime)
+            const moneyRef = ref(db, `users/${username}/money`);
+            onValue(moneyRef, (snapshot) => {
+                const money = snapshot.val();
+                // Frissítjük a pénzt a képernyőn
+                document.getElementById('money-display').innerText = money;
+            });
+        }
+
+        // --- 4. PÉNZ NÖVELÉSE GOMB ---
+        window.addMoney = function() {
+            if(currentPlayer) {
+                update(ref(db, `users/${currentPlayer}`), {
+                    money: increment(50)
+                });
+            }
+        };
+
+        // --- 5. KILÉPÉS ---
+        window.logout = function() {
+            localStorage.removeItem('mf_user');
+            localStorage.removeItem('mf_pass');
+            location.reload(); // Oldal frissítése
         };
     </script>
 </body>

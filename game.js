@@ -59,7 +59,22 @@ Object.keys(fileNames).forEach(key => {
 
 window.toggleShop = function() {
     const shop = document.getElementById('shop-window');
-    if (shop) shop.style.display = (shop.style.display === 'none' || shop.style.display === '') ? 'flex' : 'none';
+    if (shop) {
+        // Ha rejtve van, flex-re váltjuk a középre igazítás miatt
+        if (shop.style.display === 'none' || shop.style.display === '') {
+            shop.style.display = 'flex';
+        } else {
+            shop.style.display = 'none';
+        }
+    }
+};
+
+window.cheatMoney = function() {
+    if (currentPlayer) {
+        update(ref(db, `users/${currentPlayer}`), {
+            coin: increment(1000)
+        });
+    }
 };
 
 window.buyItem = function(type, price) {

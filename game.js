@@ -24,9 +24,10 @@ const tileW = 128;
 const tileH = 64; 
 let mapOffsetX = window.innerWidth / 2; 
 let mapOffsetY = 150;
-const visualOverlap = 20; 
-const mapSize = 30; // Megemeltem 30-ra, hogy nagyobb legyen a tenger a sziget körül
+const visualOverlap = 20; // Visszavettem 4-re a szebb illeszkedésért
+const mapSize = 30; 
 let mapData = [];
+let objectData = []; // ÚJ: Itt tároljuk a fákat és köveket
 
 // KÉPEK
 const images = {};
@@ -34,7 +35,9 @@ const fileNames = {
     grass: 'grass.png',
     flower: 'grass_flower.png',
     sand: 'sand.png',
-    water: 'water.png'
+    water: 'water.png',
+    tree: 'tree.png',  // ÚJ
+    rock: 'rock.png'   // ÚJ
 };
 
 Object.keys(fileNames).forEach(key => {
@@ -43,29 +46,35 @@ Object.keys(fileNames).forEach(key => {
     images[key].onload = () => { if (currentPlayer) drawMap(); };
 });
 
-// --- 1. DINAMIKUS TÉRKÉP GENERÁLÁS ---
+// --- 1. DINAMIKUS TÉRKÉP ÉS OBJEKTUM GENERÁLÁS ---
 function generateMap() {
-    mapData = Array(mapSize).fill().map(() => Array(mapSize).fill(0)); // Alapból minden víz (0)
+    mapData = Array(mapSize).fill().map(() => Array(mapSize).fill(0));
+    objectData = Array(mapSize).fill().map(() => Array(mapSize).fill(null));
 
-    const islandSize = 12; // A sziget tényleges mérete
+    const islandSize = 14; 
     const startPos = Math.floor((mapSize - islandSize) / 2);
     const endPos = startPos + islandSize;
     
     for (let y = startPos; y < endPos; y++) {
         for (let x = startPos; x < endPos; x++) {
-            // Homokpart a sziget szélén
             if (x === startPos || x === endPos - 1 || y === startPos || y === endPos - 1) {
-                mapData[y][x] = 3; 
+                mapData[y][x] = 3; // Homok
             } else {
-                // Belső rész fűvel és virággal
-                mapData[y][x] = (Math.random() < 0.15) ? 2 : 1; 
+                mapData[y][x] = (Math.random() < 0.15) ? 2 : 1; // Fű/Virág
+                
+                // Véletlenszerű fák és kövek elhelyezése
+                let rand = Math.random();
+                if (rand < 0.10) {
+                    objectData[y][x] = { type: 'tree', health: 3 };
+                } else if (rand < 0.05) {
+                    objectData[y][x] = { type: 'rock', health: 5 };
+                }
             }
         }
     }
 }
 generateMap();
 
-// Mozgatás
 let isDragging = false;
 let lastX, lastY;
 
@@ -79,11 +88,8 @@ window.addEventListener('resize', resizeCanvas);
 
 function drawMap() {
     if (!ctx) return;
-    
-    // Háttér fekete (vagy sötétkék), ez látszik a pálya szélén túl
     ctx.fillStyle = "#000000"; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
     ctx.imageSmoothingEnabled = false; 
 
     for (let y = 0; y < mapData.length; y++) {
@@ -91,10 +97,24 @@ function drawMap() {
             let screenX = (x - y) * (tileW / 2) + mapOffsetX;
             let screenY = (x + y) * (tileH / 2) + mapOffsetY;
             
-            // Csak azt rajzoljuk, ami látszik a képernyőn
             if (screenX > -tileW && screenX < canvas.width + tileW && 
                 screenY > -tileH && screenY < canvas.height + tileH) {
+                
+                // 1. Talaj rajzolása
                 drawTile(screenX, screenY, mapData[y][x]);
+
+                // 2. Objektumok rajzolása (fa, kő) a talaj tetejére
+                let obj = objectData[y][x];
+                if (obj) {
+                    let objImg = images[obj.type];
+                    if (objImg && objImg.complete) {
+                        // A fát/követ középre igazítjuk és picit feljebb toljuk
+                        let scale = 0.8;
+                        let w = tileW * scale;
+                        let h = (objImg.height * (w / objImg.width));
+                        ctx.drawImage(objImg, screenX - w/2, screenY - h + (tileH/1.5), w, h);
+                    }
+                }
             }
         }
     }
@@ -109,48 +129,56 @@ function drawTile(x, y, type) {
 
     if (img && img.complete) {
         let drawHeight = img.height * (tileW / img.width);
-        ctx.drawImage(
-            img, 
-            Math.floor(x - (tileW / 2) - (visualOverlap / 2)), 
-            Math.floor(y - (visualOverlap / 2)), 
-            tileW + visualOverlap, 
-            drawHeight + visualOverlap
-        );
+        ctx.drawImage(img, Math.floor(x - (tileW / 2) - (visualOverlap / 2)), Math.floor(y - (visualOverlap / 2)), tileW + visualOverlap, drawHeight + visualOverlap);
     }
 }
 
-// --- 3. INPUT ÉS KAMERA KORLÁTOK ---
+// --- 3. KATTINTÁS ÉS MOZGATÁS ---
+canvas.addEventListener('click', (e) => {
+    if (isDragging) return;
+
+    // Izometrikus egér koordináta számítás
+    let mx = e.clientX - mapOffsetX;
+    let my = e.clientY - mapOffsetY;
+
+    let tx = Math.floor((my / (tileH / 2) + mx / (tileW / 2)) / 2);
+    let ty = Math.floor((my / (tileH / 2) - mx / (tileW / 2)) / 2);
+
+    if (tx >= 0 && tx < mapSize && ty >= 0 && ty < mapSize) {
+        let target = objectData[ty][tx];
+        if (target) {
+            target.health--;
+            if (target.health <= 0) {
+                // Nyeremény: fa esetén 10 pénz, kő esetén 20
+                let reward = (target.type === 'tree' ? 10 : 20);
+                update(ref(db, `users/${currentPlayer}`), { money: increment(reward) });
+                objectData[ty][tx] = null;
+            }
+            drawMap();
+        }
+    }
+});
+
 window.addEventListener('mousemove', (e) => {
     if (isDragging) {
         let deltaX = e.clientX - lastX;
         let deltaY = e.clientY - lastY;
-        
         let newX = mapOffsetX + deltaX;
         let newY = mapOffsetY + deltaY;
 
-        // A térkép teljes méretei
         const totalW = (mapSize * tileW) / 2;
         const totalH = (mapSize * tileH);
 
-        // VÍZSZINTES (X) - Szimmetrikusan a képernyő közepéhez
-        if (newX > window.innerWidth / 2 - totalW && newX < window.innerWidth / 2 + totalW) {
-            mapOffsetX = newX;
-        }
+        if (newX > window.innerWidth / 2 - totalW && newX < window.innerWidth / 2 + totalW) mapOffsetX = newX;
+        if (newY > -totalH / 2 && newY < totalH / 1.5) mapOffsetY = newY;
 
-        // FÜGGŐLEGES (Y) - Kiterjesztett korlát lefelé
-        // Itt a titok: a 'totalH' értéket használjuk a lefelé mozgáshoz
-        if (newY > -totalH / 2 && newY < totalH / 1.5) {
-            mapOffsetY = newY;
-        }
-
-        lastX = e.clientX; 
-        lastY = e.clientY;
+        lastX = e.clientX; lastY = e.clientY;
         drawMap();
     }
 });
 
-canvas.addEventListener('mousedown', (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
-window.addEventListener('mouseup', () => isDragging = false);
+canvas.addEventListener('mousedown', (e) => { isDragging = false; lastX = e.clientX; lastY = e.clientY; setTimeout(() => { if(Math.abs(e.clientX - lastX) > 5) isDragging = true; }, 100); });
+window.addEventListener('mouseup', () => { setTimeout(() => isDragging = false, 50); });
 
 // --- 4. RENDSZER ---
 window.loginOrRegister = function() {

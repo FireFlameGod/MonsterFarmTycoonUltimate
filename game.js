@@ -232,40 +232,41 @@ function handleMapClick(mouseX, mouseY) {
 
     // --- ÉPÍTÉS MÓD ---
     if (isBuilding) {
-    const tileType = mapData[ty][tx];
-    const canPlaceOnLand = (tileType === 1 || tileType === 2 || tileType === 3);
-    const canPlaceOnWater = (tileType === 0);
-    
-    let allowed = false;
-    if (isBuilding.type === 'boat' && canPlaceOnWater) allowed = true;
-    if ((isBuilding.type === 'house' || isBuilding.type === 'mine') && canPlaceOnLand) allowed = true;
-
-    if (allowed && !objectData[key]) {
-        update(ref(db, `users/${currentPlayer}`), {
-            coin: increment(-isBuilding.price)
-        });
-
-        const newObj = { 
-            type: isBuilding.type, 
-            health: rewards[isBuilding.type].health 
-        };
-        set(ref(db, `islands/${currentPlayer}/${key}`), newObj);
+        const tileType = mapData[ty][tx];
+        const canPlaceOnLand = (tileType === 1 || tileType === 2 || tileType === 3);
+        const canPlaceOnWater = (tileType === 0);
         
-        isBuilding = null;
-        return;
-    } else {
-        alert("Ide nem építheted ezt!");
-        isBuilding = null;
-        return;
-    }
+        let allowed = false;
+        if (isBuilding.type === 'boat' && canPlaceOnWater) allowed = true;
+        if ((isBuilding.type === 'house' || isBuilding.type === 'mine') && canPlaceOnLand) allowed = true;
+
+        if (allowed && !objectData[key]) {
+            update(ref(db, `users/${currentPlayer}`), {
+                coin: increment(-isBuilding.price)
+            });
+
+            const newObj = { 
+                type: isBuilding.type, 
+                health: rewards[isBuilding.type].health 
+            };
+            set(ref(db, `islands/${currentPlayer}/${key}`), newObj);
+            
+            isBuilding = null;
+            return;
+        } else {
+            alert("Ide nem építheted ezt!");
+            isBuilding = null;
+            return;
+        }
+    }   
 }
 
-    if (objectData[key]) {
-        let target = objectData[key];
-        target.health--;
-        target.isShaking = true;
-        drawMap();
-        // CSAK a fát és a követ lehet sebezni
+if (objectData[key]) {
+    let target = objectData[key];
+    target.health--;
+    target.isShaking = true;
+    drawMap();
+    // CSAK a fát és a követ lehet sebezni
     if (target.type === 'tree' || target.type === 'rock') {
             target.health--;
             target.isShaking = true;

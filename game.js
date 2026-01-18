@@ -29,7 +29,7 @@ let mapOffsetY = -500;
 let mapData = [];
 let objectData = {}; 
 let isBuilding = null;
-
+let lastLevel = null;
 const rewards = {
     tree: { coin: 15, xp: 10, health: 3 },
     rock: { coin: 30, xp: 25, health: 5 },
@@ -106,6 +106,33 @@ window.addXp = function(amount) {
         });
     }
 };
+
+
+window.showLevelUp = function(lvl) {
+    document.getElementById('new-level-number').innerText = lvl;
+    document.getElementById('level-up-modal').style.display = 'flex';
+    
+    // --- DISCORD WEBHOOK ELŐKÉSZÍTÉSE ---
+    // Ide jön majd a kód, ha meglesz a webhook URL-ed
+    console.log(`Webhook küldése: ${currentPlayer} elérte a(z) ${lvl}. szintet!`);
+    // sendDiscordMessage(`${currentPlayer} szintet lépett! Új szint: **${lvl}**`);
+};
+
+window.closeLevelUp = function() {
+    document.getElementById('level-up-modal').style.display = 'none';
+};
+
+
+async function sendDiscordMessage(msg) {
+    const webhookURL = "IDE_JÖN_A_WEBHOOK_URL";
+    try {
+        await fetch(webhookURL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: msg })
+        });
+    } catch (e) { console.error("Discord hiba:", e); }
+}
 
 
 function updateShopAvailability(objects) {
@@ -366,6 +393,11 @@ async function startGame(user) {
                 // Most már van értéke a currentLevel-nek:
                 const lvlElement = document.getElementById('level-display');
                 if (lvlElement) lvlElement.innerText = currentLevel;
+
+                if (lastLevel !== null && currentLevel > lastLevel) {
+                    showLevelUp(currentLevel);
+                }
+                lastLevel = currentLevel; // Frissítjük a szintet
             }
         });
     } catch (e) { console.error(e); }

@@ -253,10 +253,14 @@ window.refreshInventoryUI = async function() {
     // Csak az aktuális kategória elemeit jelenítjük meg
     categories[currentInvTab].forEach(item => {
         const count = inv[item.id] || 0;
-        
+        const iconPath = fileNames[item.id] || `icons/${item.id}.png`;
         const row = document.createElement('div');
         row.className = "inv-row";
-        if (count === 0) row.style.opacity = "0.5";
+        if (count === 0) {
+            row.style.opacity = "0.4"; 
+        } else {
+            row.style.opacity = "1";
+        }
 
         row.innerHTML = `
             <img src="${fileNames[item.id] || 'icons/placeholder.png'}">

@@ -113,7 +113,7 @@ window.buyItem = function(type, price) {
             isBuilding = { type: type, price: price };
             window.toggleShop();
             document.getElementById('game-canvas').style.cursor = 'crosshair';
-
+            showStatus("Válaszd ki az épület helyét!");   
         } else {
 
         }
@@ -200,7 +200,12 @@ window.removeWorker = function(key) {
     }
 };
 
-
+function showStatus(text) {
+    const el = document.getElementById('game-status');
+    el.innerText = text;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 2000);
+}
 
 async function sendDiscordMessage(msg) {
     const webhookURL = "IDE_JÖN_A_WEBHOOK_URL";
@@ -446,6 +451,7 @@ function handleMapClick(mouseX, mouseY) {
             canvas.style.cursor = 'default';
         } else {
             isBuilding = null;
+            showStatus("Ide nem építhetsz!");
         }
         return;
     }

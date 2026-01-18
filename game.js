@@ -148,16 +148,21 @@ function drawMap() {
                 
                 if (obj && images[obj.type] && images[obj.type].complete) {
                     let img = images[obj.type];
-                    let scale = (obj.type === 'tree') ? 1.0 : 0.7; 
+
+                    let scale = 1.0;
+                    let yOffset = 40;
+                    if (obj.type === 'tree') { scale = 1.0; yOffset = 40; }
+                    else if (obj.type === 'rock') { scale = 0.7; yOffset = 45; }
+                    else if (obj.type === 'house') { scale = 1.5; yOffset = 40; }
+                    else if (obj.type === 'mine') { scale = 1.4; yOffset = 40; }
+                    else if (obj.type === 'boat') { scale = 1.3; yOffset = 30; } // A hajó lejjebb ül a vízen
+
                     let w = tileW * scale;
                     let h = (img.height * (w / img.width));
-                    let yOffset = (obj.type === 'tree') ? 40 : 45; 
-                    if (obj.type === 'house') scale = 1.5; // Nagyobb ház
-                    if (obj.type === 'mine') scale = 1.3;
-                    if (obj.type === 'boat') scale = 1.2;
+
                     if (obj.isShaking) {
                         ctx.globalAlpha = 0.6;
-                        ctx.drawImage(img, screenX - w/2 + (Math.random()*10-5), screenY - h + (tileH / 2) + yOffset, w, h);
+                        ctx.drawImage(img, screenX - w/2 + (Math.random()*6-3), screenY - h + (tileH / 2) + yOffset, w, h);
                         ctx.globalAlpha = 1.0;
                     } else {
                         ctx.drawImage(img, screenX - w/2, screenY - h + (tileH / 2) + yOffset, w, h);
@@ -255,32 +260,37 @@ function handleMapClick(mouseX, mouseY) {
     }
 }
 
-
-
     if (objectData[key]) {
         let target = objectData[key];
         target.health--;
         target.isShaking = true;
         drawMap();
-        
-        setTimeout(() => {
-            if (objectData[key]) {
-                objectData[key].isShaking = false;
-                drawMap();
-            }
-        }, 100);
+        // CSAK a fát és a követ lehet sebezni
+    if (target.type === 'tree' || target.type === 'rock') {
+            target.health--;
+            target.isShaking = true;
+            
+            setTimeout(() => {
+                if (objectData[key]) {
+                    objectData[key].isShaking = false;
+                    drawMap();
+                }
+            }, 100);
 
-        if (target.health <= 0) {
-            const reward = rewards[target.type];
-            update(ref(db, `users/${currentPlayer}`), {
-                coin: increment(reward.coin),
-                xp: increment(reward.xp)
-            });
-            set(ref(db, `islands/${currentPlayer}/${key}`), null);
-            delete objectData[key];
+            if (target.health <= 0) {
+                const reward = rewards[target.type];
+                update(ref(db, `users/${currentPlayer}`), {
+                    coin: increment(reward.coin),
+                    xp: increment(reward.xp)
+                });
+                set(ref(db, `islands/${currentPlayer}/${key}`), null);
+                delete objectData[key];
+            }
+            drawMap();
+        } else {
+            // Ha épületre kattintasz, nem történik semmi (vagy kiírhatsz valamit)
+            console.log("Ez egy épület, nem lehet lebontani!");
         }
-        drawMap();
-    }
 }
 
 // --- 5. RENDSZER ---

@@ -237,7 +237,7 @@ window.loginOrRegister = function() {
             set(ref(db, 'users/' + user), { 
                 username: user, 
                 password: pass, 
-                coin: 100, 
+                coin: 0, 
                 xp: 0,
                 hasIsland: false // Ez a kulcs fogja megvédeni a szigetet
             }).then(() => startGame(user));

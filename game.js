@@ -54,6 +54,29 @@ Object.keys(fileNames).forEach(key => {
     images[key].onload = () => { if (currentPlayer) drawMap(); };
 });
 
+let isBuilding = null; // Tárolja, mit akarunk éppen építeni
+
+window.toggleShop = function() {
+    const shop = document.getElementById('shop-window');
+    shop.style.display = (shop.style.display === 'none') ? 'block' : 'none';
+};
+
+window.buyItem = function(type, price) {
+    // Megnézzük, van-e elég pénz (CC)
+    get(ref(db, `users/${currentPlayer}/coin`)).then((snap) => {
+        const myCoins = snap.val() || 0;
+        if (myCoins >= price) {
+            isBuilding = { type: type, price: price };
+            toggleShop();
+            alert("Válassz egy üres helyet a szigeten!");
+        } else {
+            alert("Nincs elég Commerce Coinod!");
+        }
+    });
+};
+
+
+
 // --- 1. PÁLYA ALAP GENERÁLÁSA (FŰ/VÍZ) ---
 function setupBaseTerrain() {
     mapData = Array(mapSize).fill().map(() => Array(mapSize).fill(0)); // 0 = Víz
@@ -196,6 +219,26 @@ function handleMapClick(mouseX, mouseY) {
     let ty = Math.floor((my / (tileH / 2) - mx / (tileW / 2)) / 2);
 
     const key = `${ty}_${tx}`;
+
+    // --- ÉPÍTÉS MÓD ---
+    if (isBuilding) {
+        // Csak fűre vagy virágra (1 vagy 2) építhetünk, és csak ha üres a hely
+        if (mapData[ty] && (mapData[ty][tx] === 1 || mapData[ty][tx] === 2) && !objectData[key]) {
+            // Pénz levonása
+            update(ref(db, `users/${currentPlayer}`), {
+                coin: increment(-isBuilding.price)
+            });
+            // Tárgy elhelyezése
+            const newObj = { type: isBuilding.type, health: rewards[isBuilding.type].health };
+            set(ref(db, `islands/${currentPlayer}/${key}`), newObj);
+            
+            isBuilding = null; // Kilépés az építő módból
+            return;
+        }
+    }
+
+
+
     if (objectData[key]) {
         let target = objectData[key];
         target.health--;

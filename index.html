@@ -26,6 +26,26 @@
         <button onclick="logout()" class="logout-btn">Kilépés</button>
     </div>
 
+    <button onclick="toggleShop()" class="shop-btn">🛒 Bolt</button>
+
+    <div id="shop-window" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="toggleShop()">&times;</span>
+            <h2>Commerce Shop</h2>
+            <div class="shop-items">
+                <div class="shop-item">
+                    <p>🌲 Új Fa (15 CC)</p>
+                    <button onclick="buyItem('tree', 15)">Vásárlás</button>
+                </div>
+                <div class="shop-item">
+                    <p>🪨 Új Kő (30 CC)</p>
+                    <button onclick="buyItem('rock', 30)">Vásárlás</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <script type="module" src="game.js"></script>
 </body>
 </html>

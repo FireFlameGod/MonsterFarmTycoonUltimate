@@ -22,7 +22,7 @@ const tileW = 128;
 const tileH = 64; 
 const mapSize = 30; 
 const visualOverlap = 20;
-
+let gameZoom = window.innerWidth < 600 ? 0.6 : 1.0;
 let mapOffsetX = window.innerWidth / 2; 
 let mapOffsetY = -500; 
 
@@ -195,6 +195,20 @@ window.removeWorker = function(key) {
 };
 
 
+function resizeCanvas() {
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * ratio;
+    canvas.height = window.innerHeight * ratio;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    ctx.scale(ratio, ratio);
+    
+    // Mobilon kicsit távolítjuk a kamerát automatikusan
+    gameZoom = window.innerWidth < 600 ? 0.6 : 1.0;
+    
+    drawMap();
+}
+
 
 async function sendDiscordMessage(msg) {
     const webhookURL = "IDE_JÖN_A_WEBHOOK_URL";
@@ -291,8 +305,8 @@ function drawMap() {
 
     for (let y = 0; y < mapSize; y++) {
         for (let x = 0; x < mapSize; x++) {
-            let screenX = (x - y) * (tileW / 2) + mapOffsetX;
-            let screenY = (x + y) * (tileH / 2) + mapOffsetY;
+            let screenX = (x - y) * (tileW / 2) * gameZoom + mapOffsetX;
+            let screenY = (x + y) * (tileH / 2) * gameZoom + mapOffsetY;
             
             if (screenX > -tileW && screenX < canvas.width + tileW && 
                 screenY > -tileH && screenY < canvas.height + tileH) {
@@ -332,16 +346,19 @@ function drawMap() {
                     }
 
                     // Kiszámoljuk a szélességet és magasságot az új scale alapján
-                    let w = tileW * scale;
+                    let w = tileW * scale * gameZoom; // Beletettük a gameZoom-ot!
                     let h = (img.height * (w / img.width));
+
+                    // Az yOffset-et is skálázni kell a zoommal, hogy az épület a helyén maradjon
+                    let zoomedYOffset = yOffset * gameZoom;
 
                     // Megrajzolás (marad a korábbi logikád)
                     if (obj.isShaking) {
                         ctx.globalAlpha = 0.6;
-                        ctx.drawImage(img, screenX - w/2 + (Math.random()*4-2), screenY - h + (tileH / 2) + yOffset, w, h);
+                        ctx.drawImage(img, screenX - w/2 + (Math.random()*4-2), screenY - h + (tileH / 2 * gameZoom) + zoomedYOffset, w, h);
                         ctx.globalAlpha = 1.0;
                     } else {
-                        ctx.drawImage(img, screenX - w/2, screenY - h + (tileH / 2) + yOffset, w, h);
+                        ctx.drawImage(img, screenX - w/2, screenY - h + (tileH / 2 * gameZoom) + zoomedYOffset, w, h);
                     }
                 }
             }
@@ -355,8 +372,15 @@ function drawTile(x, y, type) {
     else if (type === 2) img = images.flower;
     else if (type === 3) img = images.sand;
     if (img && img.complete) {
-        let drawHeight = img.height * (tileW / img.width);
-        ctx.drawImage(img, Math.floor(x - (tileW / 2) - (visualOverlap / 2)), Math.floor(y - (visualOverlap / 2)), tileW + visualOverlap, drawHeight + visualOverlap);
+        let drawWidth = (tileW + visualOverlap) * gameZoom;
+        let drawHeight = (img.height * (tileW / img.width) + visualOverlap) * gameZoom;
+        
+        ctx.drawImage(img, 
+            Math.floor(x - (tileW / 2 * gameZoom) - (visualOverlap / 2 * gameZoom)), 
+            Math.floor(y - (visualOverlap / 2 * gameZoom)), 
+            drawWidth, 
+            drawHeight
+        );
     }
 }
 

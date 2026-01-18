@@ -97,7 +97,7 @@ function drawTile(x, y, type) {
             
             );
         }
-            
+    }
     } else {
         ctx.beginPath();
         ctx.moveTo(x, y);

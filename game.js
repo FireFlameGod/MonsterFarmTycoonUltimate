@@ -172,7 +172,18 @@ window.addEventListener('mousemove', (e) => {
     if (isDragging) {
         mapOffsetX += e.clientX - lastX;
         mapOffsetY += e.clientY - lastY;
-        lastX = e.clientX; lastY = e.clientY;
+
+        // --- KAMERA BOUNDS (Visszaállítva) ---
+        // Vízszintes korlát
+        if (mapOffsetX < 0) mapOffsetX = 0;
+        if (mapOffsetX > window.innerWidth) mapOffsetX = window.innerWidth;
+        
+        // Függőleges korlát
+        if (mapOffsetY < -1000) mapOffsetY = -1000;
+        if (mapOffsetY > 0) mapOffsetY = 0;
+
+        lastX = e.clientX; 
+        lastY = e.clientY;
         drawMap();
     }
 });

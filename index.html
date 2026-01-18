@@ -24,13 +24,15 @@
         <div class="res-box" style="border-color: #3498db;">📊 Szint: <span id="level-display">1</span></div>
         <div class="res-box">💰 <span id="money-display">0</span> CC</div>
         <div class="res-box">⭐ <span id="xp-display">0</span> XP</div>
+        
         <button onclick="toggleShop()" class="shop-btn">🛒 Bolt</button>
-        <button id="admin-cheat-btn" class="cheat-btn" onclick="cheatMoney()" style="display: none;">+1000 CC (Cheat)</button>
-        <button id="npc-manage-btn" class="shop-btn" onclick="openNpcModal()" style="display: none; background: #9b59b6; color: white;">👥 NPC</button>
+        <button id="npc-manage-btn" class="shop-btn" style="display: none; background: #9b59b6; color: white;" onclick="openNpcModal()">👥 NPC</button>
+        
         <button onclick="logout()" class="logout-btn">Kilépés</button>
     </div>
 
-    
+    <button id="admin-cheat-btn" class="cheat-btn" onclick="cheatMoney()" style="display: none;">+1000 CC</button>
+
     <div id="level-up-modal" class="modal">
         <div class="modal-content" style="border-color: #f1c40f; background: linear-gradient(145deg, #2c3e50, #34495e);">
             <h1 style="color: #f1c40f; margin-bottom: 5px;">SZINTLÉPÉS! 🎉</h1>
@@ -38,7 +40,6 @@
             <button onclick="closeLevelUp()" style="background: #f1c40f; color: #000; margin-top: 15px;">Szuper!</button>
         </div>
     </div>
-
 
     <div id="npc-modal" class="modal">
         <div class="modal-content">
@@ -51,31 +52,29 @@
         </div>
     </div>
 
-
     <div id="shop-window" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="toggleShop()">&times;</span>
-        <h2>Épületek</h2>
-        <div id="shop-items" style="display: flex; flex-direction: column; gap: 10px;">
-            <div class="shop-item" id="item-house">
-                <img src="assets/house.png" style="width: 50px; height: 50px; vertical-align: middle;">
-                <span>Ház (500 CC)</span>
-                <button onclick="buyItem('house', 500)" id="btn-house" style="width: auto; padding: 5px 10px; font-size: 14px;">Vétel</button>
-            </div>
-            <div class="shop-item" id="item-mine">
-                <img src="assets/mine.png" style="width: 50px; height: 50px; vertical-align: middle;">
-                <span>Bánya (1000 CC)</span>
-                <button onclick="buyItem('mine', 1000)" id="btn-mine" style="width: auto; padding: 5px 10px; font-size: 14px;">Vétel</button>
-            </div>
-            <div class="shop-item" id="item-boat">
-                <img src="assets/boat.png" style="width: 50px; height: 50px; vertical-align: middle;">
-                <span>Hajó (300 CC)</span>
-                <button onclick="buyItem('boat', 300)" id="btn-boat" style="width: auto; padding: 5px 10px; font-size: 14px;">Vétel</button>
+        <div class="modal-content">
+            <span class="close" onclick="toggleShop()">&times;</span>
+            <h2>Épületek</h2>
+            <div id="shop-items" style="display: flex; flex-direction: column; gap: 10px;">
+                <div class="shop-item" id="item-house">
+                    <img src="assets/house.png" style="width: 50px; height: 50px;">
+                    <span>Ház (500 CC)</span>
+                    <button onclick="buyItem('house', 500)" id="btn-house">Vétel</button>
+                </div>
+                <div class="shop-item" id="item-mine">
+                    <img src="assets/mine.png" style="width: 50px; height: 50px;">
+                    <span>Bánya (1000 CC)</span>
+                    <button onclick="buyItem('mine', 1000)" id="btn-mine">Vétel</button>
+                </div>
+                <div class="shop-item" id="item-boat">
+                    <img src="assets/boat.png" style="width: 50px; height: 50px;">
+                    <span>Hajó (300 CC)</span>
+                    <button onclick="buyItem('boat', 300)" id="btn-boat">Vétel</button>
                 </div>
             </div>
         </div>
     </div>
-
 
     <script type="module" src="game.js"></script>
 </body>

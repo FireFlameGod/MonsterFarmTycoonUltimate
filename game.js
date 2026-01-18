@@ -25,7 +25,7 @@ const tileW = 128;
 const tileH = 64; 
 let mapOffsetX = window.innerWidth / 2; 
 let mapOffsetY = 150;
-const visualOverlap = 2
+const visualOverlap = 3
 // KÉPEK BETÖLTÉSE
 // Létrehozunk egy objektumot a képeknek
 const images = {};

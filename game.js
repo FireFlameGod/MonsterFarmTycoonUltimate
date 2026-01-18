@@ -443,6 +443,7 @@ function handleMapClick(mouseX, mouseY) {
 
             set(ref(db, `islands/${currentPlayer}/${key}`), { type: isBuilding.type, health: 999 });
             isBuilding = null;
+            canvas.style.cursor = 'default';
         } else {
             alert("Ide nem építhetsz!");
             isBuilding = null;

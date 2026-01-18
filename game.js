@@ -90,6 +90,24 @@ window.buyItem = function(type, price) {
     });
 };
 
+// XP Matek: Megmondja, hányas szintű vagy az XP-d alapján
+function calculateLevel(xp) {
+    // Képlet: level = (XP / 100) ^ (1 / 1.5)
+    // Ez azt jelenti: Lv1: 0 XP, Lv2: 100 XP, Lv3: 282 XP, Lv4: 520 XP...
+    if (!xp || xp < 100) return 1;
+    return Math.floor(Math.pow(xp / 100, 1 / 1.5)) + 1;
+}
+
+// Függvény XP adáshoz (ezt hívd meg, ha a játékos csinál valamit)
+window.addXp = function(amount) {
+    if (currentPlayer) {
+        update(ref(db, `users/${currentPlayer}`), {
+            xp: increment(amount)
+        });
+    }
+};
+
+
 function updateShopAvailability(objects) {
     const purchasedTypes = Object.values(objects).map(o => o.type);
     
@@ -339,8 +357,15 @@ async function startGame(user) {
         onValue(ref(db, `users/${user}`), (snap) => {
             const d = snap.val();
             if (d) {
+                const xp = d.xp || 0;
+                const currentLevel = calculateLevel(xp); // Kiszámoljuk a szintet az XP-ből
+
                 document.getElementById('money-display').innerText = d.coin || 0;
-                document.getElementById('xp-display').innerText = d.xp || 0;
+                document.getElementById('xp-display').innerText = xp;
+                
+                // Most már van értéke a currentLevel-nek:
+                const lvlElement = document.getElementById('level-display');
+                if (lvlElement) lvlElement.innerText = currentLevel;
             }
         });
     } catch (e) { console.error(e); }

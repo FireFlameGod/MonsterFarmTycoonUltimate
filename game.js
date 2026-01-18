@@ -367,6 +367,78 @@ function getNpcStats() {
 }
 
 
+async function calculateOfflineEarnings() {
+    if (!currentPlayer || !objectData) return;
+
+    const userRef = ref(db, `users/${currentPlayer}`);
+    const snapshot = await get(userRef);
+    
+    if (snapshot.exists() && snapshot.val().lastActive) {
+        const lastActive = snapshot.val().lastActive;
+        const now = Date.now();
+        
+        // Kiszámoljuk az eltelt másodperceket
+        const elapsedSeconds = Math.floor((now - lastActive) / 1000);
+        
+        // Csak akkor számolunk, ha több mint 30 másodpercre ment el
+        if (elapsedSeconds > 30) {
+            let totalGreenJade = 0;
+            let totalPurpleJade = 0;
+
+            // Végignézzük a bányákat a betöltött objectData-ban
+            for (const key in objectData) {
+                const obj = objectData[key];
+                if (obj.type === 'mine' && obj.workers > 0) {
+                    // Hány 10 másodperces ciklus telt el? (10000ms = 10s)
+                    const cycles = Math.floor(elapsedSeconds / 10);
+                    
+                    // Valószínűségi alapon elosztjuk (70% zöld, 30% lila)
+                    for (let i = 0; i < cycles; i++) {
+                        if (Math.random() < 0.3) {
+                            totalPurpleJade += obj.workers;
+                        } else {
+                            totalGreenJade += obj.workers;
+                        }
+                    }
+                }
+            }
+
+            // Ha találtunk valamit, mentsük el és mutassuk meg
+            if (totalGreenJade > 0 || totalPurpleJade > 0) {
+                // Firebase mentés - Green Jade
+                if (totalGreenJade > 0) {
+                    const gRef = ref(db, `users/${currentPlayer}/inventory/green_jade`);
+                    const gSnap = await get(gRef);
+                    await set(gRef, (gSnap.val() || 0) + totalGreenJade);
+                }
+                // Firebase mentés - Purple Jade
+                if (totalPurpleJade > 0) {
+                    const pRef = ref(db, `users/${currentPlayer}/inventory/purple_jade`);
+                    const pSnap = await get(pRef);
+                    await set(pRef, (pSnap.val() || 0) + totalPurpleJade);
+                }
+
+                // UI megjelenítése
+                const modal = document.getElementById('afk-modal');
+                const rewardDiv = document.getElementById('afk-rewards');
+                
+                if (modal && rewardDiv) {
+                    rewardDiv.innerHTML = `
+                        <p style="display:flex; align-items:center; justify-content:center; gap:10px;">
+                            <img src="assets/green_jade.png" width="30"> <b>${totalGreenJade}</b> Green Jade
+                        </p>
+                        <p style="display:flex; align-items:center; justify-content:center; gap:10px;">
+                            <img src="assets/purple_jade.png" width="30"> <b>${totalPurpleJade}</b> Purple Jade
+                        </p>
+                    `;
+                    modal.style.display = 'block';
+                }
+            }
+        }
+    }
+}
+
+
 // Ez a függvény elindul egyszer, és folyamatosan fut a háttérben
 function startProductionCycle() {
     setInterval(async () => {
@@ -381,9 +453,12 @@ function startProductionCycle() {
                 const x = parseInt(coords[1]);
                 await processMining(obj.workers, x, y);
             }
-            
+          
             // Itt később jöhet a hajó is:
             // if (obj.type === 'boat' && obj.workers > 0) { ... }
+        }
+        if (currentPlayer) {
+            set(ref(db, `users/${currentPlayer}/lastActive`), Date.now());
         }
     }, MINING_TIME);
 }
@@ -810,6 +885,12 @@ async function startGame(user) {
 
     } catch (e) { console.error(e); }
 
+
+    // Csak egyszer futtassuk le a belépésnél
+    if (!window.afkChecked) {
+        calculateOfflineEarnings();
+        window.afkChecked = true; // Megjegyezzük, hogy ezen a sessionön már ellenőriztük
+    }
     startProductionCycle();
     gameLoop();
     setInterval(() => {

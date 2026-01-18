@@ -160,7 +160,7 @@ window.addEventListener('mousemove', (e) => {
         // Függőleges (Fel/Le)
         // A -200 és +800 közötti tartomány biztosítja, hogy lásd az alját is
         if (mapOffsetY < -200) mapOffsetY = -200; // Felső korlát (kevesebb fekete fent)
-        if (mapOffsetY > 200) mapOffsetY = 200;  // Alsó korlát (több hely lefelé húzni)
+        if (mapOffsetY > 3000) mapOffsetY = 3000;  // Alsó korlát (több hely lefelé húzni)
 
         lastX = e.clientX; 
         lastY = e.clientY;

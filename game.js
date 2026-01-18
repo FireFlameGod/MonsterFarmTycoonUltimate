@@ -786,6 +786,7 @@ async function startGame(user) {
     } catch (e) { console.error(e); }
 
     startProductionCycle();
+    gameLoop();
     setInterval(() => {
         if (!currentPlayer || !objectData) return;
     }, 10000);

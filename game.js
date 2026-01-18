@@ -149,29 +149,18 @@ window.addEventListener('mousemove', (e) => {
         let deltaX = e.clientX - lastX;
         let deltaY = e.clientY - lastY;
         
-        // Kiszámoljuk az ÚJ pozíciót
-        let nextX = mapOffsetX + deltaX;
-        let nextY = mapOffsetY + deltaY;
+        mapOffsetX += deltaX;
+        mapOffsetY += deltaY;
 
-        // KORLÁTOK: A sziget méretéből számolva (Hogy ne tévedj el a sötétben)
-        const mapWidthPixels = mapSize * tileW / 2;
-        const mapHeightPixels = mapSize * tileH / 2;
+       
+        // Vízszintes (Bal/Jobb)
+        if (mapOffsetX < 0) mapOffsetX = 0; // Ne menjen túl balra
+        if (mapOffsetX > window.innerWidth) mapOffsetX = window.innerWidth; // Ne menjen túl jobbra
 
-        // Vízszintes: maradhat a korábbi, ami bevált
-        const limitX = mapWidthPixels / 4;
-        if (nextX > -limitX && nextX < window.innerWidth + limitX) {
-            mapOffsetX = nextX;
-        }
-
-        // Függőleges: Itt toljuk el a határokat!
-        // A 'topLimit' megakadályozza, hogy túl sok legyen a fekete fent
-        // A 'bottomLimit' extra helyet ad, hogy a víz és a sziget alja ne vágódjon le
-        const topLimit = -50; 
-        const bottomLimit = window.innerHeight - (mapHeightPixels / 2);
-
-        if (nextY > topLimit && nextY < bottomLimit + 400) {
-            mapOffsetY = nextY;
-        }
+        // Függőleges (Fel/Le)
+        // A -200 és +800 közötti tartomány biztosítja, hogy lásd az alját is
+        if (mapOffsetY < -200) mapOffsetY = -200; // Felső korlát (kevesebb fekete fent)
+        if (mapOffsetY > 600) mapOffsetY = 600;  // Alsó korlát (több hely lefelé húzni)
 
         lastX = e.clientX; 
         lastY = e.clientY;
@@ -250,7 +239,7 @@ function startGame(user) {
 
     // Kezdő középpont beállítása
     mapOffsetX = window.innerWidth / 2;
-    mapOffsetY = 50;
+    mapOffsetY = 150;
 
     resizeCanvas(); 
     onValue(ref(db, `users/${user}`), (snap) => {

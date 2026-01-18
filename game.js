@@ -135,7 +135,7 @@ function drawTile(x, y, type) {
     }
 }
 
-// --- 3. INPUT (KAMERA BOUND JAVÍTVA) ---
+// --- 3. INPUT (JAVÍTOTT KAMERA MOZGÁS) ---
 canvas.addEventListener('mousedown', (e) => {
     isDragging = true;
     startDragX = e.clientX;
@@ -149,19 +149,19 @@ window.addEventListener('mousemove', (e) => {
         let deltaX = e.clientX - lastX;
         let deltaY = e.clientY - lastY;
         
-        mapOffsetX += deltaX;
-        mapOffsetY += deltaY;
+        // Kiszámoljuk az ÚJ pozíciót
+        let nextX = mapOffsetX + deltaX;
+        let nextY = mapOffsetY + deltaY;
 
+        // KORLÁTOK: A sziget méretéből számolva (Hogy ne tévedj el a sötétben)
         const limitX = (mapSize * tileW) / 2;
         const limitY = (mapSize * tileH) / 2;
-        const padding = 200; // Mennyi "feketét" lássunk még a szélén túl
 
-        if (nextX > -limitX + padding && nextX < window.innerWidth + limitX - padding) {
+        // Csak akkor frissítünk, ha határon belül vagyunk
+        if (nextX > -limitX && nextX < window.innerWidth + limitX) {
             mapOffsetX = nextX;
         }
-
-        // Függőleges korlát (Fel-Le)
-        if (nextY > -limitY + padding && nextY < window.innerHeight + limitY - padding) {
+        if (nextY > -limitY && nextY < window.innerHeight + limitY) {
             mapOffsetY = nextY;
         }
 
@@ -236,10 +236,11 @@ function startGame(user) {
     
     document.getElementById('login-screen').style.display = 'none';
     const ui = document.getElementById('ui-layer');
-    ui.style.display = 'flex'; // Itt flex kell a szép elrendezéshez
+    ui.style.display = 'flex'; 
     
     document.getElementById('player-name').innerText = user;
 
+    // Kezdő középpont beállítása
     mapOffsetX = window.innerWidth / 2;
     mapOffsetY = window.innerHeight / 2 - (mapSize * tileH / 4);
 

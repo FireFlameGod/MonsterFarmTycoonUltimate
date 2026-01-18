@@ -165,12 +165,38 @@ function drawMap() {
                 
                 if (obj && images[obj.type] && images[obj.type].complete) {
                     let img = images[obj.type];
-                    let scale = (obj.type === 'rock') ? 0.7 : (obj.type === 'tree') ? 1.0 : 1.4;
-                    let yOffset = (obj.type === 'rock') ? 45 : 40;
-                    
+
+                    // ALAPÉRTELMEZETT ÉRTÉKEK
+                    let scale = 1.0;
+                    let yOffset = 40;
+
+                    // EGYEDI BEÁLLÍTÁSOK TÍPUSONKÉNT
+                    if (obj.type === 'tree') {
+                        scale = 1.0;
+                        yOffset = 40;
+                    } 
+                    else if (obj.type === 'rock') {
+                        scale = 0.7;
+                        yOffset = 45;
+                    } 
+                    else if (obj.type === 'house') {
+                        scale = 2.0;    // Itt növeld a ház méretét
+                        yOffset = 50;   // Itt told lejjebb/feljebb
+                    } 
+                    else if (obj.type === 'mine') {
+                        scale = 1.8;    // Itt növeld a bánya méretét
+                        yOffset = 48;
+                    } 
+                    else if (obj.type === 'boat') {
+                        scale = 1.5;
+                        yOffset = 25;   // A hajó kevesebb offsetet kap, hogy a vízben üljön
+                    }
+
+                    // Kiszámoljuk a szélességet és magasságot az új scale alapján
                     let w = tileW * scale;
                     let h = (img.height * (w / img.width));
 
+                    // Megrajzolás (marad a korábbi logikád)
                     if (obj.isShaking) {
                         ctx.globalAlpha = 0.6;
                         ctx.drawImage(img, screenX - w/2 + (Math.random()*4-2), screenY - h + (tileH / 2) + yOffset, w, h);

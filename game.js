@@ -100,14 +100,21 @@ function drawMap() {
             if (screenX > -tileW && screenX < canvas.width + tileW && 
                 screenY > -tileH && screenY < canvas.height + tileH) {
                 
+                // 1. Talaj rajzolása
                 drawTile(screenX, screenY, mapData[y][x]);
 
+                // 2. Objektumok (Fa/Kő) rajzolása - JAVÍTVA
                 let obj = objectData[y][x];
                 if (obj && images[obj.type].complete) {
                     let img = images[obj.type];
-                    let scale = (obj.type === 'tree') ? 1.0 : 0.7; // A fa nagyobb (1.0), a kő kisebb (0.7)
-                    let yOffset = (obj.type === 'tree') ? 15 : 10; // Ezzel tudod lejjebb tolni (pixelben)
+                    
+                    // Először kiszámoljuk a méretet
+                    let scale = (obj.type === 'tree') ? 1.0 : 0.7; 
+                    let w = tileW * scale; // Most már létezik a 'w' mielőtt a 'h'-hoz használnánk!
                     let h = (img.height * (w / img.width));
+                    
+                    let yOffset = (obj.type === 'tree') ? 15 : 10; 
+
                     ctx.drawImage(img, screenX - w/2, screenY - h + (tileH / 2) + yOffset, w, h);
                 }
             }

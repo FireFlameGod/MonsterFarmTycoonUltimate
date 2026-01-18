@@ -255,11 +255,15 @@ window.refreshInventoryUI = async function() {
         const count = inv[item.id] || 0;
 
         let finalIcon;
-        if (fileNames[item.id]) {
-            // Ha a fileNames-ben már benne van a teljes út (pl: 'icons/fish.png')
-            finalIcon = fileNames[item.id];
+       if (fileNames[item.id]) {
+            // Ha Image objektum (new Image()), akkor az .src kell nekünk
+            // Ha sima string (pl. 'assets/house.png'), akkor maradhat úgy
+            finalIcon = (typeof fileNames[item.id] === 'object') ? fileNames[item.id].src : fileNames[item.id];
         } else {
-            // Ha nincs benne, megpróbáljuk alapértelmezetten az icons mappából
+            finalIcon = `icons/${item.id}.png`;
+        }
+
+        if (!finalIcon || finalIcon === "" || finalIcon.includes('undefined')) {
             finalIcon = `icons/${item.id}.png`;
         }
 

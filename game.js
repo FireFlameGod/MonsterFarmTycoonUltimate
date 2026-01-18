@@ -239,7 +239,7 @@ function startGame(user) {
 
     // Kezdő középpont beállítása
     mapOffsetX = window.innerWidth / 2;
-    mapOffsetY = -200;
+    mapOffsetY = -500;
 
     resizeCanvas(); 
     onValue(ref(db, `users/${user}`), (snap) => {

@@ -536,7 +536,8 @@ function drawMap() {
                     let scale = 1.0;
                     let yOffset = 40;
                     let bounce = 0;
-
+                    let squash = 0;
+                    let stretch = 0;
                     // Beállítások típusonként
                     if (obj.type === 'tree') { scale = 1.3; yOffset = 40; } 
                     else if (obj.type === 'rock') { scale = 0.9; yOffset = 55; } 
@@ -545,24 +546,42 @@ function drawMap() {
                         scale = 2.0; 
                         yOffset = 120; 
                         if (obj.workers > 0) {
-                            // Szinuszos ugrálás
-                            bounce = Math.abs(Math.sin(Date.now() / 200)) * (5 * gameZoom); 
+                            // Egy közös animációs alap (sinus hullám)
+                            let anim = Math.sin(Date.now() / 150); 
+                            
+                            // Ugrás: csak a hullám pozitív részében ugrik fel
+                            bounce = Math.max(0, anim) * (15 * gameZoom);
+                            
+                            // Rugalmasság: -10 és +10 pixel között változik a zoom függvényében
+                            let strength = 10 * gameZoom;
+                            squashW = -anim * strength; 
+                            squashH = anim * strength;
                         }
                     } 
                     else if (obj.type === 'boat') { scale = 2.0; yOffset = 100; }
 
+                    // Méretek kiszámolása az animált értékekkel
                     let w = zW * scale;
                     let h = (img.height * (w / img.width));
                     let finalYOffset = yOffset * gameZoom;
 
-                    // Rajzolás (itt korrigáltuk a bounce-t és a változóneveket)
+                    let finalW = w + squashW;
+                    let finalH = h + squashH;
+
                     if (obj.isShaking) {
+                        // A rázkódásnál is adjuk hozzá a bounce-t, hogy ne akadjon össze
                         ctx.globalAlpha = 0.6;
-                        ctx.drawImage(img, screenX - w/2 + (Math.random()*4-2), (screenY - h + (zH / 2) + finalYOffset) - bounce, w, h + bounce);
+                        ctx.drawImage(img, screenX - finalW/2 + (Math.random()*4-2), (screenY - h + (zH / 2) + finalYOffset) - bounce - squashH, finalW, finalH);
                         ctx.globalAlpha = 1.0;
                     } else {
-                        // A bounce kivonódik az Y pozícióból (felfelé ugrik), és hozzáadódik a magassághoz (nyúlik)
-                        ctx.drawImage(img, screenX - w/2, (screenY - h + (zH / 2) + finalYOffset) - bounce, w, h + bounce);
+                        // A tiszta rajzolás
+                        ctx.drawImage(
+                            img, 
+                            screenX - finalW / 2, 
+                            (screenY - h + (zH / 2) + finalYOffset) - bounce - squashH, 
+                            finalW, 
+                            finalH
+                        );
                     }
                 }
             }

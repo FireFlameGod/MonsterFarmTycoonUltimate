@@ -80,10 +80,14 @@ button:hover { background: #2ecc71; }
 
 #logout-btn {
     background: #c0392b; 
-    width: auto; 
-    padding: 8px 18px; 
+    width: auto; /* Ez biztosítja, hogy ne legyen hosszú */
+    padding: 5px 15px; 
     font-size: 14px; 
-    margin-left: auto; /* Jobb szélre tolja */
+    margin-left: auto; 
     border-radius: 5px;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
 }
 #logout-btn:hover { background: #e74c3c; }

@@ -149,13 +149,14 @@ window.addEventListener('mousemove', (e) => {
         let deltaX = e.clientX - lastX;
         let deltaY = e.clientY - lastY;
         
-        let nextX = mapOffsetX + deltaX;
-        let nextY = mapOffsetY + deltaY;
-
+        mapOffsetX += deltaX;
+        mapOffsetY += deltaY;
         // Kamera korlát (Bound) - nem engedi elveszni a szigetet
-        const margin = 400; 
-        if (nextX > -margin && nextX < window.innerWidth + margin) mapOffsetX = nextX;
-        if (nextY > -margin && nextY < window.innerHeight + margin) mapOffsetY = nextY;
+        const screenLimit = 1000; 
+        if (mapOffsetX < -screenLimit) mapOffsetX = -screenLimit;
+        if (mapOffsetX > window.innerWidth + screenLimit) mapOffsetX = window.innerWidth + screenLimit;
+        if (mapOffsetY < -screenLimit) mapOffsetY = -screenLimit;
+        if (mapOffsetY > window.innerHeight + screenLimit) mapOffsetY = window.innerHeight + screenLimit;
 
         lastX = e.clientX; 
         lastY = e.clientY;

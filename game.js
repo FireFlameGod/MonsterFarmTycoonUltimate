@@ -56,9 +56,12 @@ const userData = {
     coin: 1000,
     xp: 500,
     inventory: {
-        iron_ore: 5,   // Bányából
-        gold_ore: 1,   // Ritka bányából
-        carp: 3        // Hajóból (ponty)
+        fish: 0,   // Bányából
+        fish2: 0,   // Ritka bányából
+        fish3: 0,
+        kraken: 0,
+        green_jade: 0,
+        purple_jade: 0        // Hajóból (ponty)
     },
     unlocked_npc_slots: 1 // A ház adja
 };
@@ -73,11 +76,12 @@ const fileNames = {
     house: 'assets/house.png',
     boat: 'assets/boat.png',
     mine: 'assets/mine.png',
-    iron_ore: new Image(),
-    gold_ore: new Image(),
-    fish_common: new Image(),
-    fish_rare: new Image(),
-    goblin: new Image()
+    fish: 'icons/fish.png',
+    fish2: 'icons/fish2.png',
+    fish3: 'icons/fish3.png',
+    kraken: 'icons/kraken.png',
+    green_jade: 'icons/green_jade.png',
+    purple_jade: 'icons/purple_jade.png'
 };
 
 Object.keys(fileNames).forEach(key => {
@@ -266,6 +270,57 @@ function getNpcStats() {
         free: totalCapacity - currentlyWorking
     };
 }
+
+// Inventory ablak nyitás/csukás
+window.toggleInventory = function() {
+    const win = document.getElementById('inventory-window');
+    const isOpen = win.style.display === 'flex';
+    win.style.display = isOpen ? 'none' : 'flex';
+    
+    if (!isOpen) {
+        refreshInventoryUI();
+    }
+};
+
+// UI frissítése az ikonokkal
+async function refreshInventoryUI() {
+    const invContainer = document.getElementById('inventory-items');
+    if (!invContainer) return;
+    invContainer.innerHTML = ""; // Ablak ürítése
+
+    const snap = await get(ref(db, `users/${currentPlayer}/inventory`));
+    const inv = snap.val() || {};
+
+    // Ezeket a kulcsokat keressük az adatbázisban (amiknek van ikonja)
+    const displayItems = [
+        { id: 'fish', name: 'Hal' },
+        { id: 'fish2', name: 'Aranyhal' },
+        { id: 'fish3', name: 'Kék hal' },
+        { id: 'kraken', name: 'Kraken' },
+        { id: 'green_jade', name: 'Zöld Jade' },
+        { id: 'purple_jade', name: 'Lila Jade' }
+    ];
+
+    displayItems.forEach(item => {
+        const count = inv[item.id] || 0;
+        const itemDiv = document.createElement('div');
+        itemDiv.className = "inventory-slot"; // Új CSS osztály a rácshoz
+        
+        // Ha nincs belőle, legyen szürkébb
+        const opacity = count > 0 ? "1" : "0.3";
+
+        itemDiv.innerHTML = `
+            <div style="opacity: ${opacity}; display: flex; flex-direction: column; align-items: center;">
+                <img src="${fileNames[item.id]}" style="width: 45px; height: 45px; object-fit: contain;">
+                <span style="font-size: 11px; font-weight: bold; margin-top: 5px;">${count}</span>
+            </div>
+        `;
+        
+        invContainer.appendChild(itemDiv);
+    });
+}
+
+
 
 function setupBaseTerrain() {
     mapData = Array(mapSize).fill().map(() => Array(mapSize).fill(0));

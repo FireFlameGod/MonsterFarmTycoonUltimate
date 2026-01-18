@@ -170,6 +170,47 @@ button:hover { background: #2ecc71; transform: translateY(-1px); }
     display: none; z-index: 5000; font-size: 14px;
 }
 
+#inventory-items .shop-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 80px;
+}
+
+#inventory-items img {
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+#inventory-items {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 oszlopos elrendezés */
+    gap: 15px;
+    padding: 10px;
+    justify-items: center;
+}
+
+.inventory-slot {
+    background: rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 10px;
+    width: 60px;
+    height: 75px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.2s;
+}
+
+.inventory-slot:hover {
+    transform: scale(1.05);
+    border-color: #3498db;
+}
+
 /* --- MOBIL FIXEK --- */
 @media (max-width: 768px) {
     .level-container { max-width: 140px; margin-left: 10px; }

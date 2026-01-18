@@ -24,7 +24,7 @@ const tileW = 128;
 const tileH = 64; 
 let mapOffsetX = window.innerWidth / 2; 
 let mapOffsetY = 150;
-const visualOverlap = 4; 
+const visualOverlap = 20; 
 const mapSize = 30; // Megemeltem 30-ra, hogy nagyobb legyen a tenger a sziget körül
 let mapData = [];
 

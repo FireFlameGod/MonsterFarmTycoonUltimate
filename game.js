@@ -176,7 +176,7 @@ function drawMap() {
                         yOffset = 40;
                     } 
                     else if (obj.type === 'rock') {
-                        scale = 1.5;
+                        scale = 0.9;
                         yOffset = 45;
                     } 
                     else if (obj.type === 'house') {

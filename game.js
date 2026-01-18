@@ -384,32 +384,32 @@ async function processMining(workerCount, mineX, mineY) {
     const isPurple = Math.random() < 0.3;
     const itemKey = isPurple ? 'purple_jade' : 'green_jade';
     
-    // Mennyit kapunk? (munkások száma befolyásolhatja, most 1 munkás = 1 jade)
     const amount = workerCount; 
 
     console.log(`Bányászat sikeres: +${amount} ${itemKey}`);
 
-    // Mentés Firebase-be (increment-tel, hogy biztonságos legyen)
+    // Mentés Firebase-be
     const invRef = ref(db, `users/${currentPlayer}/inventory/${itemKey}`);
     
-    // Lekérjük a jelenlegi szintet és hozzáadjuk (vagy használhatod a Firebase increment függvényét is)
     const snap = await get(invRef);
     const current = snap.val() || 0;
-    createFloatingIcon(mineX, mineY, itemKey);
     await set(invRef, current + amount);
 
-    / Képernyő koordináták kiszámolása az animációhoz
+    // JAVÍTÁS: Dupla perjel (//) a komment elejére!
+    // Képernyő koordináták kiszámolása az animációhoz
     const zW = tileW * gameZoom;
     const zH = tileH * gameZoom;
-    // Izometrikus képlet
-    let screenX = (objX - objY) * (zW / 2) + mapOffsetX;
-    let screenY = (objX + objY) * (zH / 2) + mapOffsetY;
+    
+    // Izometrikus képlet - JAVÍTÁS: mineX és mineY használata
+    let screenX = (mineX - mineY) * (zW / 2) + mapOffsetX;
+    let screenY = (mineX + mineY) * (zH / 2) + mapOffsetY;
 
     // Indítjuk az ikont a kiszámolt ponton
     createFloatingIcon(screenX, screenY, itemKey);
 
     // Ha nyitva az inventory, frissítsük a látványt
     if (typeof refreshInventoryUI === "function" && 
+        document.getElementById('inventory-window') && 
         document.getElementById('inventory-window').style.display === 'flex') {
         refreshInventoryUI();
     }

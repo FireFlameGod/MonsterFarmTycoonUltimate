@@ -181,7 +181,7 @@ function drawMap() {
                     } 
                     else if (obj.type === 'house') {
                         scale = 2.0;    // Itt növeld a ház méretét
-                        yOffset = 50;   // Itt told lejjebb/feljebb
+                        yOffset = 60;   // Itt told lejjebb/feljebb
                     } 
                     else if (obj.type === 'mine') {
                         scale = 2.0;    // Itt növeld a bánya méretét

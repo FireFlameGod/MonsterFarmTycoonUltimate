@@ -128,6 +128,12 @@ function calculateLevel(xp) {
     return Math.floor(Math.pow(xp / 100, 1 / 1.5)) + 1;
 }
 
+function getTotalXpForLevel(level) {
+    if (level <= 1) return 0;
+    // Visszafelé számoljuk: XP = 100 * (level - 1) ^ 1.5
+    return Math.floor(100 * Math.pow(level - 1, 1.5));
+}
+
 // Függvény XP adáshoz (ezt hívd meg, ha a játékos csinál valamit)
 window.addXp = function(amount) {
     if (currentPlayer) {
@@ -491,18 +497,28 @@ async function startGame(user) {
     currentPlayer = user;
     localStorage.setItem('mf_user', user);
     localStorage.setItem('mf_pass', document.getElementById('password').value);
+    
+    // UI MEGJELENÍTÉSE
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('ui-layer').style.display = 'flex'; 
+    
+    // Oldalsó menü (Bolt, Kilépés) megjelenítése
+    const sideMenu = document.getElementById('side-menu-layer');
+    if (sideMenu) sideMenu.style.display = 'flex';
+
     document.getElementById('player-name').innerText = user;
+
+    // KAMERA IGAZÍTÁSA
     if (isMobile) {
-        mapOffsetX = window.innerWidth / 2; // Mobilon legyen középen
+        mapOffsetX = window.innerWidth / 2;
+        mapOffsetY = 100;
     } else {
-        mapOffsetX = 500; // Gépen maradjon ott, ahol megszoktad
+        mapOffsetX = 500;
+        mapOffsetY = -300;
     }
+
     const cheatBtn = document.getElementById('admin-cheat-btn');
-    if (cheatBtn) {
-        cheatBtn.style.display = 'block';
-    }
+    if (cheatBtn) cheatBtn.style.display = 'block';
 
     try {
         const userSnap = await get(ref(db, `users/${user}`));
@@ -511,35 +527,45 @@ async function startGame(user) {
             await update(ref(db, `users/${user}`), { hasIsland: true });
         }
 
-        // --- SZIGET FIGYELŐ (Épületek és NPC gomb kezelése) ---
+        // --- SZIGET FIGYELŐ ---
         onValue(ref(db, `islands/${user}`), (snap) => {
             objectData = snap.exists() ? snap.val() : {};
             
-            // Megnézzük, van-e háza a szigeten az NPC gombhoz
             const hasHouse = Object.values(objectData).some(o => o.type === 'house');
             const npcBtn = document.getElementById('npc-manage-btn');
             if (npcBtn) {
-                npcBtn.style.display = hasHouse ? 'block' : 'none';
+                npcBtn.style.display = hasHouse ? 'flex' : 'none';
             }
 
             updateShopAvailability(objectData);
             drawMap();
         });
 
-        // --- FELHASZNÁLÓ FIGYELŐ (Pénz, XP, Szint) ---
+        // --- FELHASZNÁLÓ FIGYELŐ (XP CSÍK ÉS PÉNZ) ---
         onValue(ref(db, `users/${user}`), (snap) => {
             const d = snap.val();
             if (d) {
                 const xp = d.xp || 0;
                 const currentLevel = calculateLevel(xp);
 
-                document.getElementById('money-display').innerText = d.coin || 0;
-                document.getElementById('xp-display').innerText = xp;
+                // Matek a progress barhoz (szükség van a getTotalXpForLevel függvényre!)
+                const minXpForCurrent = getTotalXpForLevel(currentLevel);
+                const minXpForNext = getTotalXpForLevel(currentLevel + 1);
                 
-                const lvlElement = document.getElementById('level-display');
-                if (lvlElement) lvlElement.innerText = currentLevel;
+                const xpGainedInLevel = xp - minXpForCurrent;
+                const xpNeededForLevel = minXpForNext - minXpForCurrent;
+                const progress = Math.min(100, (xpGainedInLevel / xpNeededForLevel) * 100);
 
-                // Szintlépés figyelése
+                // UI Frissítés
+                document.getElementById('money-display').innerText = Math.floor(d.coin || 0);
+                document.getElementById('level-display').innerText = currentLevel;
+                
+                const xpProgress = document.getElementById('xp-progress');
+                if (xpProgress) xpProgress.style.width = progress + "%";
+                
+                const xpText = document.getElementById('xp-text');
+                if (xpText) xpText.innerText = `${Math.floor(xpGainedInLevel)} / ${Math.floor(xpNeededForLevel)} XP`;
+
                 if (lastLevel !== null && currentLevel > lastLevel) {
                     showLevelUp(currentLevel);
                 }
@@ -549,10 +575,9 @@ async function startGame(user) {
 
     } catch (e) { console.error(e); }
 
-    // A termelés kiürítve, amíg meg nem írjuk az item-rendszert
+    // Üresen hagyva a kérésedre - ide jön majd a termelés, ha szólsz
     setInterval(() => {
         if (!currentPlayer || !objectData) return;
-        // Ide jön majd az érc és hal gyűjtés kódja
     }, 10000);
 
     resizeCanvas(); 

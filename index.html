@@ -19,16 +19,30 @@
 
     <canvas id="game-canvas"></canvas>
     <div id="game-status"></div>
-    
-    <div id="ui-layer">
-        <div class="player-info">👤 <span id="player-name"></span></div>
-        <div class="res-box" style="border-color: #3498db;">📊 Szint: <span id="level-display">1</span></div>
-        <div class="res-box">💰 <span id="money-display">0</span> CC</div>
-        <div class="res-box">⭐ <span id="xp-display">0</span> XP</div>
         <button onclick="toggleShop()" class="shop-btn">🛒 Bolt</button>
         <button id="admin-cheat-btn" class="cheat-btn" onclick="cheatMoney()" style="display: none;">+1000 CC (Cheat)</button>
         <button id="npc-manage-btn" class="shop-btn" onclick="openNpcModal()" style="display: none; background: #9b59b6; color: white; top: 120px;">👥 NPC Kezelés</button>
-        <button onclick="logout()" class="logout-btn">Kilépés</button>
+
+    <div id="ui-layer">
+        <div class="top-bar">
+            <div class="ui-section user-profile">
+                <div class="avatar">🦖</div>
+                <span id="player-name">Játékos</span>
+            </div>
+
+            <div class="ui-section level-section">
+                <span class="ui-label">LVL <span id="level-display">1</span></span>
+                <div class="xp-bar-container">
+                    <div id="xp-progress" class="xp-bar-fill"></div>
+                    <span id="xp-text">0 / 100 XP</span>
+                </div>
+            </div>
+
+            <div class="ui-section money-section">
+                <span class="money-icon">💰</span>
+                <span id="money-display">0</span> <small>CC</small>
+            </div>
+        </div>
     </div>
 
     

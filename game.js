@@ -415,7 +415,7 @@ async function processMining(workerCount, mineX, mineY) {
     let screenY = (mineX + mineY) * (zH / 2) + mapOffsetY;
 
     // Indítjuk az ikont a kiszámolt ponton
-    createFloatingIcon(screenX, screenY, itemKey);
+    createFloatingIcon(mineX, mineY, itemKey);
 
     // Ha nyitva az inventory, frissítsük a látványt
     if (typeof refreshInventoryUI === "function" && 
@@ -425,10 +425,11 @@ async function processMining(workerCount, mineX, mineY) {
     }
 }
 
-function createFloatingIcon(screenX, screenY, itemId) {
+function createFloatingIcon(gridX, gridY, itemId) {
     floatingIcons.push({
-        x: screenX, 
-        y: screenY - 50, // Egy kicsit az épület felett induljon
+        gridX: gridX,
+        gridY: gridY,
+        yOffset: 0, // Ez fog növekedni, ahogy száll fel
         itemId: itemId,
         opacity: 1,
         life: 1.0
@@ -436,31 +437,36 @@ function createFloatingIcon(screenX, screenY, itemId) {
 }
 
 function drawFloatingIcons() {
+    const zW = tileW * gameZoom;
+    const zH = tileH * gameZoom;
+
     for (let i = floatingIcons.length - 1; i >= 0; i--) {
         let icon = floatingIcons[i];
         
-        // Mozgás felfelé
-        icon.y -= 1;
-        icon.opacity -= 0.02; // Elhalványulás
-        icon.life -= 0.02;
+        // Számoljuk ki, hol van a bánya MOST a képernyőn
+        let screenX = (icon.gridX - icon.gridY) * (zW / 2) + mapOffsetX;
+        let screenY = (icon.gridX + icon.gridY) * (zH / 2) + mapOffsetY;
+
+        // Az ikon emelkedése
+        icon.yOffset -= 1.5; 
+        icon.opacity -= 0.015;
+        icon.life -= 0.015;
 
         ctx.save();
         ctx.globalAlpha = icon.opacity;
         
-        // Az ikon kirajzolása (pl. green_jade képe)
         const img = images[icon.itemId];
         if (img) {
-            ctx.drawImage(img, icon.x - 10, icon.y - 20, 20, 20);
+            // A screenY-hoz hozzáadjuk az emelkedést (yOffset)
+            ctx.drawImage(img, screenX - 10, screenY + icon.yOffset - 60, 25, 25);
         }
         
-        // Egy kis "+1" szöveg az ikon mellé
         ctx.fillStyle = "white";
-        ctx.font = "bold 14px Arial";
-        ctx.fillText("+1", icon.x + 12, icon.y - 5);
+        ctx.font = `bold ${14 * gameZoom}px Arial`;
+        ctx.fillText("+1", screenX + 15, screenY + icon.yOffset - 45);
         
         ctx.restore();
 
-        // Ha elhalványult, töröljük a listából
         if (icon.life <= 0) {
             floatingIcons.splice(i, 1);
         }

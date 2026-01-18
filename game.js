@@ -17,7 +17,7 @@ const db = getDatabase(app);
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 let currentPlayer = null;
-
+const isMobile = window.innerWidth < 768;
 const tileW = 128; 
 const tileH = 64; 
 const mapSize = 30; 
@@ -363,23 +363,24 @@ function drawTile(x, y, type) {
 let isDragging = false;
 let startDragX, startDragY, lastX, lastY;
 
-canvas.addEventListener('mousedown', (e) => {
+canvas.addEventListener('pointerdown', (e) => {
     isDragging = true;
     startDragX = e.clientX; startDragY = e.clientY;
     lastX = e.clientX; lastY = e.clientY;
+    
+    // Elkerüljük a szövegkijelölést húzás közben
+    canvas.setPointerCapture(e.pointerId);
 });
 
-window.addEventListener('mousemove', (e) => {
+window.addEventListener('pointermove', (e) => {
     if (isDragging) {
         mapOffsetX += e.clientX - lastX;
         mapOffsetY += e.clientY - lastY;
 
-        // --- KAMERA BOUNDS (Visszaállítva) ---
-        // Vízszintes korlát
+        // --- KAMERA BOUNDS (A te általad kért pontos értékek) ---
         if (mapOffsetX < 0) mapOffsetX = 0;
         if (mapOffsetX > window.innerWidth) mapOffsetX = window.innerWidth;
         
-        // Függőleges korlát
         if (mapOffsetY < -1000) mapOffsetY = -1000;
         if (mapOffsetY > 0) mapOffsetY = 0;
 
@@ -389,10 +390,12 @@ window.addEventListener('mousemove', (e) => {
     }
 });
 
-window.addEventListener('mouseup', (e) => {
+window.addEventListener('pointerup', (e) => {
     if (isDragging) {
+        canvas.releasePointerCapture(e.pointerId);
         let moveDist = Math.hypot(e.clientX - startDragX, e.clientY - startDragY);
-        if (moveDist < 5) handleMapClick(e.clientX, e.clientY);
+        // Ha alig mozdult el az ujja/egere, akkor az kattintás
+        if (moveDist < 10) handleMapClick(e.clientX, e.clientY);
     }
     isDragging = false;
 });
@@ -470,7 +473,11 @@ async function startGame(user) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('ui-layer').style.display = 'flex'; 
     document.getElementById('player-name').innerText = user;
-    
+    if (isMobile) {
+        mapOffsetX = window.innerWidth / 2; // Mobilon legyen középen
+    } else {
+        mapOffsetX = 500; // Gépen maradjon ott, ahol megszoktad
+    }
     const cheatBtn = document.getElementById('admin-cheat-btn');
     if (cheatBtn) {
         cheatBtn.style.display = 'block';

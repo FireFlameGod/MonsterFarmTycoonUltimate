@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, set, get, child, update, increment, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-// --- FIREBASE CONFIG (MARAD A RÉGI) ---
+// --- FIREBASE CONFIG ---
 const firebaseConfig = {
     apiKey: "AIzaSyA-MauYrQl5WZ4TPv53vNxuUFnW3dEG0Z8",
     authDomain: "monsterfarmtycoonultimate.firebaseapp.com",
@@ -20,14 +20,15 @@ const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 let currentPlayer = null;
 
-// Térkép beállítások
 const tileW = 128; 
 const tileH = 64; 
 let mapOffsetX = window.innerWidth / 2; 
 let mapOffsetY = 150;
-const visualOverlap = 20
-// KÉPEK BETÖLTÉSE
-// Létrehozunk egy objektumot a képeknek
+const visualOverlap = 4; 
+const mapSize = 30; // Megemeltem 30-ra, hogy nagyobb legyen a tenger a sziget körül
+let mapData = [];
+
+// KÉPEK
 const images = {};
 const fileNames = {
     grass: 'grass.png',
@@ -42,26 +43,33 @@ Object.keys(fileNames).forEach(key => {
     images[key].onload = () => { if (currentPlayer) drawMap(); };
 });
 
+// --- 1. DINAMIKUS TÉRKÉP GENERÁLÁS ---
+function generateMap() {
+    mapData = Array(mapSize).fill().map(() => Array(mapSize).fill(0)); // Alapból minden víz (0)
 
-// SZIGET TÉRKÉP (1 = Fű, 0 = Víz)
-const mapData = [
-    [0,0,0,0,0,0,0,0,0,0],
-    [0,0,3,3,3,3,3,3,0,0], // Part
-    [0,3,1,1,2,1,1,1,3,0], // Fű és virág bent
-    [0,3,1,2,1,1,2,1,3,0],
-    [0,3,1,1,1,1,1,1,3,0],
-    [0,3,2,1,1,2,1,2,3,0],
-    [0,3,1,1,1,1,1,1,3,0],
-    [0,3,1,1,2,1,1,1,3,0],
-    [0,0,3,3,3,3,3,3,0,0],
-    [0,0,0,0,0,0,0,0,0,0]
-];
+    const islandSize = 12; // A sziget tényleges mérete
+    const startPos = Math.floor((mapSize - islandSize) / 2);
+    const endPos = startPos + islandSize;
+    
+    for (let y = startPos; y < endPos; y++) {
+        for (let x = startPos; x < endPos; x++) {
+            // Homokpart a sziget szélén
+            if (x === startPos || x === endPos - 1 || y === startPos || y === endPos - 1) {
+                mapData[y][x] = 3; 
+            } else {
+                // Belső rész fűvel és virággal
+                mapData[y][x] = (Math.random() < 0.15) ? 2 : 1; 
+            }
+        }
+    }
+}
+generateMap();
 
-// Mozgatás változók
+// Mozgatás
 let isDragging = false;
 let lastX, lastY;
 
-// --- 1. JÁTÉKMOTOR ---
+// --- 2. JÁTÉKMOTOR ---
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -70,21 +78,12 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 
 function drawMap() {
-    if (!ctx || !images.water.complete) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!ctx) return;
     
-    // --- VÉGTELEN VÍZ HÁTTÉR ---
-    // Létrehozunk egy mintát a water.png-ből
-    const ptrn = ctx.createPattern(images.water, 'repeat');
-    ctx.fillStyle = ptrn;
+    // Háttér fekete (vagy sötétkék), ez látszik a pálya szélén túl
+    ctx.fillStyle = "#000000"; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Elmentjük a rajz állapotát, eltoljuk a háttért is a kamerával, majd visszaállítjuk
-    ctx.save();
-    ctx.translate(mapOffsetX % tileW, mapOffsetY % tileH); 
-    ctx.fillRect(-tileW * 2, -tileH * 2, canvas.width + tileW * 4, canvas.height + tileH * 4);
-    ctx.restore();
-    
-    // Optimalizálás: image smoothing kikapcsolása pixel artnál
     ctx.imageSmoothingEnabled = false; 
 
     for (let y = 0; y < mapData.length; y++) {
@@ -92,24 +91,24 @@ function drawMap() {
             let screenX = (x - y) * (tileW / 2) + mapOffsetX;
             let screenY = (x + y) * (tileH / 2) + mapOffsetY;
             
-            drawTile(screenX, screenY, mapData[y][x]);
+            // Csak azt rajzoljuk, ami látszik a képernyőn
+            if (screenX > -tileW && screenX < canvas.width + tileW && 
+                screenY > -tileH && screenY < canvas.height + tileH) {
+                drawTile(screenX, screenY, mapData[y][x]);
+            }
         }
     }
 }
 
 function drawTile(x, y, type) {
     let img = null;
-    
-    // Meghatározzuk melyik kép kell a szám alapján
     if (type === 0) img = images.water;
     else if (type === 1) img = images.grass;
     else if (type === 2) img = images.flower;
     else if (type === 3) img = images.sand;
 
     if (img && img.complete) {
-        // Kiszámoljuk a magasságot, hogy ne torzuljon a kép
         let drawHeight = img.height * (tileW / img.width);
-        
         ctx.drawImage(
             img, 
             Math.floor(x - (tileW / 2) - (visualOverlap / 2)), 
@@ -117,42 +116,33 @@ function drawTile(x, y, type) {
             tileW + visualOverlap, 
             drawHeight + visualOverlap
         );
-    } else {
-        // Tartalék rajzolás (ha még tölt a kép)
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + tileW / 2, y + tileH / 2);
-        ctx.lineTo(x, y + tileH);
-        ctx.lineTo(x - tileW / 2, y + tileH / 2);
-        ctx.fillStyle = type === 0 ? "#3498db" : (type === 3 ? "#f1c40f" : "#2ecc71");
-        ctx.fill();
     }
 }
 
-// --- 2. INPUT KEZELÉS (Marad a régi) ---
-canvas.addEventListener('mousedown', (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
+// --- 3. INPUT ÉS KAMERA KORLÁTOK ---
 window.addEventListener('mousemove', (e) => {
     if (isDragging) {
-        mapOffsetX += e.clientX - lastX; mapOffsetY += e.clientY - lastY;
-        lastX = e.clientX; lastY = e.clientY;
+        let newX = mapOffsetX + (e.clientX - lastX);
+        let newY = mapOffsetY + (e.clientY - lastY);
+
+        // Kiszámoljuk a térkép széleit, hogy ne lehessen lehúzni a pályáról
+        // A 0,0 pont és a mapSize,mapSize pont vetületei alapján
+        const limitX = (mapSize * tileW) / 2;
+        const limitY = (mapSize * tileH);
+
+        if (Math.abs(newX - window.innerWidth / 2) < limitX) mapOffsetX = newX;
+        if (newY > -limitY/4 && newY < limitY) mapOffsetY = newY;
+
+        lastX = e.clientX; 
+        lastY = e.clientY;
         drawMap();
     }
 });
+
+canvas.addEventListener('mousedown', (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
 window.addEventListener('mouseup', () => isDragging = false);
 
-// Mobil input
-canvas.addEventListener('touchstart', (e) => { isDragging = true; lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; e.preventDefault(); }, {passive: false});
-canvas.addEventListener('touchmove', (e) => {
-    if (isDragging) {
-        mapOffsetX += e.touches[0].clientX - lastX; mapOffsetY += e.touches[0].clientY - lastY;
-        lastX = e.touches[0].clientX; lastY = e.touches[0].clientY;
-        drawMap();
-    }
-    e.preventDefault();
-}, {passive: false});
-canvas.addEventListener('touchend', () => isDragging = false);
-
-// --- 3. LOGIN & RENDSZER (Marad a régi) ---
+// --- 4. RENDSZER ---
 window.loginOrRegister = function() {
     const user = document.getElementById('username').value.trim();
     const pass = document.getElementById('password').value.trim();
@@ -173,15 +163,10 @@ function startGame(user) {
     currentPlayer = user;
     localStorage.setItem('mf_user', user);
     localStorage.setItem('mf_pass', document.getElementById('password').value);
-
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('ui-layer').style.display = 'block';
     document.getElementById('player-name').innerText = user;
-
     resizeCanvas(); 
-    // A drawMap-et majd a kép betöltése is hívja, de biztos ami biztos:
-    drawMap();
-    
     onValue(ref(db, `users/${user}/money`), (snap) => {
         document.getElementById('money-display').innerText = snap.val();
     });

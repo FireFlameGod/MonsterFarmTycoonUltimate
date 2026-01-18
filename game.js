@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, set, get, child, update, increment, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-// --- FIREBASE CONFIG ---
 const firebaseConfig = {
     apiKey: "AIzaSyA-MauYrQl5WZ4TPv53vNxuUFnW3dEG0Z8",
     authDomain: "monsterfarmtycoonultimate.firebaseapp.com",
@@ -15,7 +14,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// --- VÁLTOZÓK ---
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 let currentPlayer = null;
@@ -25,22 +23,21 @@ const tileH = 64;
 const mapSize = 30; 
 const visualOverlap = 20;
 
-// A TE KAMERA BEÁLLÍTÁSAID
 let mapOffsetX = window.innerWidth / 2; 
 let mapOffsetY = -500; 
 
 let mapData = [];
-let objectData = {}; // OBJEKTUMKÉNT INDÍTJUK
+let objectData = {}; 
+let isBuilding = null;
 
 const rewards = {
     tree: { coin: 15, xp: 10, health: 3 },
     rock: { coin: 30, xp: 25, health: 5 },
-    house: { health: 999 }, // Halhatatlan épületek
+    house: { health: 999 },
     boat: { health: 999 },
     mine: { health: 999 }
 };
 
-// KÉPEK
 const images = {};
 const fileNames = {
     grass: 'grass.png',
@@ -60,80 +57,62 @@ Object.keys(fileNames).forEach(key => {
     images[key].onload = () => { if (currentPlayer) drawMap(); };
 });
 
-let isBuilding = null; // Tárolja, mit akarunk éppen építeni
-
 window.toggleShop = function() {
     const shop = document.getElementById('shop-window');
-    shop.style.display = (shop.style.display === 'none') ? 'block' : 'none';
+    if (shop) shop.style.display = (shop.style.display === 'none' || shop.style.display === '') ? 'flex' : 'none';
 };
 
 window.buyItem = function(type, price) {
-    // Megnézzük, van-e elég pénz (CC)
     get(ref(db, `users/${currentPlayer}/coin`)).then((snap) => {
         const myCoins = snap.val() || 0;
         if (myCoins >= price) {
             isBuilding = { type: type, price: price };
-            toggleShop();
-            alert("Válassz egy üres helyet a szigeten!");
+            window.toggleShop();
+            alert("Válaszd ki a helyet a szigeten!");
         } else {
             alert("Nincs elég Commerce Coinod!");
         }
     });
 };
 
-
-
-// --- 1. PÁLYA ALAP GENERÁLÁSA (FŰ/VÍZ) ---
 function setupBaseTerrain() {
-    mapData = Array(mapSize).fill().map(() => Array(mapSize).fill(0)); // 0 = Víz
+    mapData = Array(mapSize).fill().map(() => Array(mapSize).fill(0));
     const islandSize = 14; 
     const startPos = Math.floor((mapSize - islandSize) / 2);
     const endPos = startPos + islandSize;
-    
     for (let y = 0; y < mapSize; y++) {
         for (let x = 0; x < mapSize; x++) {
             if (y >= startPos && y < endPos && x >= startPos && x < endPos) {
-                if (x === startPos || x === endPos - 1 || y === startPos || y === endPos - 1) {
-                    mapData[y][x] = 3; // Homok
-                } else {
-                    mapData[y][x] = (Math.random() < 0.15) ? 2 : 1; // Fű/Virág
-                }
-            } else {
-                mapData[y][x] = 0; // Minden más víz
-            }
+                if (x === startPos || x === endPos - 1 || y === startPos || y === endPos - 1) mapData[y][x] = 3;
+                else mapData[y][x] = (Math.random() < 0.15) ? 2 : 1;
+            } else mapData[y][x] = 0;
         }
     }
 }
 setupBaseTerrain();
 
-// --- 2. ÚJ JÁTÉKOS SZIGET GENERÁLÁSA (FÁK/KÖVEK) ---
 function createInitialIsland(userId) {
     let newObjects = {};
     const islandSize = 14; 
     const startPos = Math.floor((mapSize - islandSize) / 2);
     const endPos = startPos + islandSize;
-
     for (let y = startPos + 1; y < endPos - 1; y++) {
         for (let x = startPos + 1; x < endPos - 1; x++) {
             let rand = Math.random();
             const key = `${y}_${x}`;
-            if (rand < 0.12) {
-                newObjects[key] = { type: 'tree', health: rewards.tree.health };
-            } else if (rand < 0.22) { 
-                newObjects[key] = { type: 'rock', health: rewards.rock.health };
-            }
+            if (rand < 0.12) newObjects[key] = { type: 'tree', health: rewards.tree.health };
+            else if (rand < 0.22) newObjects[key] = { type: 'rock', health: rewards.rock.health };
         }
     }
     set(ref(db, `islands/${userId}`), newObjects);
     return newObjects;
 }
 
-// --- 3. RAJZOLÁS ---
 function drawMap() {
     if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#000000"; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.imageSmoothingEnabled = false; 
 
     for (let y = 0; y < mapSize; y++) {
         for (let x = 0; x < mapSize; x++) {
@@ -145,27 +124,20 @@ function drawMap() {
                 
                 drawTile(screenX, screenY, mapData[y][x]);
 
-                // TÁRGYAK RAJZOLÁSA KULCS ALAPJÁN
                 const key = `${y}_${x}`;
                 let obj = objectData[key]; 
                 
                 if (obj && images[obj.type] && images[obj.type].complete) {
                     let img = images[obj.type];
-
-                    let scale = 1.0;
-                    let yOffset = 40;
-                    if (obj.type === 'tree') { scale = 1.0; yOffset = 40; }
-                    else if (obj.type === 'rock') { scale = 0.7; yOffset = 45; }
-                    else if (obj.type === 'house') { scale = 1.5; yOffset = 40; }
-                    else if (obj.type === 'mine') { scale = 1.4; yOffset = 40; }
-                    else if (obj.type === 'boat') { scale = 1.3; yOffset = 30; } // A hajó lejjebb ül a vízen
-
+                    let scale = (obj.type === 'rock') ? 0.7 : (obj.type === 'tree') ? 1.0 : 1.4;
+                    let yOffset = (obj.type === 'rock') ? 45 : 40;
+                    
                     let w = tileW * scale;
                     let h = (img.height * (w / img.width));
 
                     if (obj.isShaking) {
                         ctx.globalAlpha = 0.6;
-                        ctx.drawImage(img, screenX - w/2 + (Math.random()*6-3), screenY - h + (tileH / 2) + yOffset, w, h);
+                        ctx.drawImage(img, screenX - w/2 + (Math.random()*4-2), screenY - h + (tileH / 2) + yOffset, w, h);
                         ctx.globalAlpha = 1.0;
                     } else {
                         ctx.drawImage(img, screenX - w/2, screenY - h + (tileH / 2) + yOffset, w, h);
@@ -181,38 +153,26 @@ function drawTile(x, y, type) {
     if (type === 1) img = images.grass;
     else if (type === 2) img = images.flower;
     else if (type === 3) img = images.sand;
-
     if (img && img.complete) {
         let drawHeight = img.height * (tileW / img.width);
         ctx.drawImage(img, Math.floor(x - (tileW / 2) - (visualOverlap / 2)), Math.floor(y - (visualOverlap / 2)), tileW + visualOverlap, drawHeight + visualOverlap);
     }
 }
 
-// --- 4. INPUTOK ---
 let isDragging = false;
 let startDragX, startDragY, lastX, lastY;
 
 canvas.addEventListener('mousedown', (e) => {
     isDragging = true;
-    startDragX = e.clientX;
-    startDragY = e.clientY;
-    lastX = e.clientX;
-    lastY = e.clientY;
+    startDragX = e.clientX; startDragY = e.clientY;
+    lastX = e.clientX; lastY = e.clientY;
 });
 
 window.addEventListener('mousemove', (e) => {
     if (isDragging) {
         mapOffsetX += e.clientX - lastX;
         mapOffsetY += e.clientY - lastY;
-
-        // A TE KÉRT KORLÁTAID
-        if (mapOffsetX < 0) mapOffsetX = 0;
-        if (mapOffsetX > window.innerWidth) mapOffsetX = window.innerWidth;
-        if (mapOffsetY < -1000) mapOffsetY = -1000;
-        if (mapOffsetY > 0) mapOffsetY = 0;
-
-        lastX = e.clientX; 
-        lastY = e.clientY;
+        lastX = e.clientX; lastY = e.clientY;
         drawMap();
     }
 });
@@ -230,139 +190,52 @@ function handleMapClick(mouseX, mouseY) {
     let my = mouseY - mapOffsetY;
     let tx = Math.floor((my / (tileH / 2) + mx / (tileW / 2)) / 2);
     let ty = Math.floor((my / (tileH / 2) - mx / (tileW / 2)) / 2);
-
     const key = `${ty}_${tx}`;
 
-    // --- ÉPÍTÉS MÓD ---
     if (isBuilding) {
+        if (!mapData[ty] || mapData[ty][tx] === undefined) return;
         const tileType = mapData[ty][tx];
-        const canPlaceOnLand = (tileType === 1 || tileType === 2 || tileType === 3);
-        const canPlaceOnWater = (tileType === 0);
-        
-        let allowed = false;
-        if (isBuilding.type === 'boat' && canPlaceOnWater) allowed = true;
-        if ((isBuilding.type === 'house' || isBuilding.type === 'mine') && canPlaceOnLand) allowed = true;
+        let allowed = (isBuilding.type === 'boat' && tileType === 0) || 
+                      ((isBuilding.type === 'house' || isBuilding.type === 'mine') && tileType >= 1);
 
         if (allowed && !objectData[key]) {
-            update(ref(db, `users/${currentPlayer}`), {
-                coin: increment(-isBuilding.price)
-            });
-
-            const newObj = { 
-                type: isBuilding.type, 
-                health: rewards[isBuilding.type].health 
-            };
-            set(ref(db, `islands/${currentPlayer}/${key}`), newObj);
-            
+            update(ref(db, `users/${currentPlayer}`), { coin: increment(-isBuilding.price) });
+            set(ref(db, `islands/${currentPlayer}/${key}`), { type: isBuilding.type, health: 999 });
             isBuilding = null;
-            return;
         } else {
-            alert("Ide nem építheted ezt!");
+            alert("Ide nem építhetsz!");
             isBuilding = null;
-            return;
         }
-    }   
-}
-
-if (objectData[key]){
-    let target = objectData[key];
-    target.health--;function handleMapClick(mouseX, mouseY) {
-    let mx = mouseX - mapOffsetX;
-    let my = mouseY - mapOffsetY;
-    let tx = Math.floor((my / (tileH / 2) + mx / (tileW / 2)) / 2);
-    let ty = Math.floor((my / (tileH / 2) - mx / (tileW / 2)) / 2);
-
-    const key = `${ty}_${tx}`;
-
-    // --- ÉPÍTÉS MÓD ---
-    if (isBuilding) {
-        // Ellenőrizzük, hogy a térképen belül vagyunk-e
-        if (!mapData[ty] || mapData[ty][tx] === undefined) {
-             isBuilding = null;
-             return;
-        }
-
-        const tileType = mapData[ty][tx];
-        const canPlaceOnLand = (tileType === 1 || tileType === 2 || tileType === 3);
-        const canPlaceOnWater = (tileType === 0);
-        
-        let allowed = false;
-        if (isBuilding.type === 'boat' && canPlaceOnWater) allowed = true;
-        if ((isBuilding.type === 'house' || isBuilding.type === 'mine') && canPlaceOnLand) allowed = true;
-
-        if (allowed && (!objectData || !objectData[key])) {
-            update(ref(db, `users/${currentPlayer}`), {
-                coin: increment(-isBuilding.price)
-            });
-
-            const newObj = { 
-                type: isBuilding.type, 
-                health: rewards[isBuilding.type].health 
-            };
-            set(ref(db, `islands/${currentPlayer}/${key}`), newObj);
-            
-            isBuilding = null;
-            isDragging = false; // Megakadályozza a kamera elugrását
-            return;
-        } else {
-            alert("Ide nem építheted ezt!");
-            isBuilding = null;
-            isDragging = false;
-            return;
-        }
+        return;
     }
-    }
-    // --- INTERAKCIÓ (Vágás/Ütés) ---
-    if (objectData && objectData[key]) {
+
+    if (objectData[key]) {
         let target = objectData[key];
-        
-        // Csak a fát és a követ lehet sebezni
         if (target.type === 'tree' || target.type === 'rock') {
             target.health--;
             target.isShaking = true;
             drawMap();
-
-            setTimeout(() => {
-                if (objectData[key]) {
-                    objectData[key].isShaking = false;
-                    drawMap();
-                }
-            }, 100);
-
+            setTimeout(() => { if (objectData[key]) { objectData[key].isShaking = false; drawMap(); } }, 100);
             if (target.health <= 0) {
-                const reward = rewards[target.type];
-                update(ref(db, `users/${currentPlayer}`), {
-                    coin: increment(reward.coin),
-                    xp: increment(reward.xp)
-                });
+                const r = rewards[target.type];
+                update(ref(db, `users/${currentPlayer}`), { coin: increment(r.coin), xp: increment(r.xp) });
                 set(ref(db, `islands/${currentPlayer}/${key}`), null);
                 delete objectData[key];
             }
-        } else {
-            console.log("Ez egy épület, nem lehet lebontani!");
         }
     }
 }
 
-// --- 5. RENDSZER ---
 window.loginOrRegister = function() {
     const user = document.getElementById('username').value.trim();
     const pass = document.getElementById('password').value.trim();
     if (!user || !pass) return;
-
     get(child(ref(db), `users/${user}`)).then((snapshot) => {
         if (snapshot.exists()) {
             if (snapshot.val().password === pass) startGame(user);
             else document.getElementById('error-msg').style.display = 'block';
         } else {
-            // ÚJ JÁTÉKOS: Itt jelöljük meg, hogy MÉG NINCS inicializálva
-            set(ref(db, 'users/' + user), { 
-                username: user, 
-                password: pass, 
-                coin: 0, 
-                xp: 0,
-                hasIsland: false // Ez a kulcs fogja megvédeni a szigetet
-            }).then(() => startGame(user));
+            set(ref(db, 'users/' + user), { username: user, password: pass, coin: 0, xp: 0, hasIsland: false }).then(() => startGame(user));
         }
     });
 };
@@ -371,49 +244,34 @@ async function startGame(user) {
     currentPlayer = user;
     localStorage.setItem('mf_user', user);
     localStorage.setItem('mf_pass', document.getElementById('password').value);
-    
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('ui-layer').style.display = 'flex'; 
     document.getElementById('player-name').innerText = user;
 
-
     try {
-        // 1. Megnézzük, járt-e már itt a játékos
         const userSnap = await get(ref(db, `users/${user}`));
-        const userData = userSnap.val();
-
-        // 2. Ha még nincs szigete (false vagy hiányzik), generálunk EGYETLEN EGYSZER
-        if (!userData.hasIsland) {
-            console.log("Sziget generálása első alkalommal...");
-            const newIsland = createInitialIsland(user);
-            objectData = newIsland;
-            // Elmentjük, hogy már van szigete
+        if (!userSnap.val().hasIsland) {
+            objectData = createInitialIsland(user);
             await update(ref(db, `users/${user}`), { hasIsland: true });
         }
-
-        // 3. CSAK EZUTÁN indítjuk el a folyamatos figyelőt
-        onValue(ref(db, `islands/${user}`), (snapshot) => {
-            if (snapshot.exists()) {
-                objectData = snapshot.val();
-            } else {
-                // Ha a hasIsland true, de nincs adat, akkor tényleg üres a sziget
-                objectData = {}; 
-            }
+        onValue(ref(db, `islands/${user}`), (snap) => {
+            objectData = snap.exists() ? snap.val() : {};
             drawMap();
         });
+        onValue(ref(db, `users/${user}`), (snap) => {
+            const d = snap.val();
+            if (d) {
+                document.getElementById('money-display').innerText = d.coin || 0;
+                document.getElementById('xp-display').innerText = d.xp || 0;
+            }
+        });
+    } catch (e) { console.error(e); }
 
-    } catch (error) {
-        console.error("Hiba az indulásnál:", error);
-    }
-
-    // Erőforrások betöltése
-    onValue(ref(db, `users/${user}`), (snap) => {
-        const data = snap.val();
-        if (data) {
-            document.getElementById('money-display').innerText = data.coin || 0;
-            document.getElementById('xp-display').innerText = data.xp || 0;
-        }
-    });
+    setInterval(() => {
+        if (!currentPlayer || !objectData) return;
+        let mines = Object.values(objectData).filter(o => o.type === 'mine').length;
+        if (mines > 0) update(ref(db, `users/${currentPlayer}`), { coin: increment(mines * 10) });
+    }, 10000);
 
     resizeCanvas(); 
 }
@@ -427,14 +285,6 @@ window.onload = function() {
     }
 };
 
-window.logout = function() {
-    localStorage.clear();
-    location.reload();
-};
-
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    drawMap();
-}
+window.logout = function() { localStorage.clear(); location.reload(); };
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; drawMap(); }
 window.addEventListener('resize', resizeCanvas);

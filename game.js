@@ -34,7 +34,10 @@ let objectData = {}; // OBJEKTUMKÉNT INDÍTJUK
 
 const rewards = {
     tree: { coin: 15, xp: 10, health: 3 },
-    rock: { coin: 30, xp: 25, health: 5 }
+    rock: { coin: 30, xp: 25, health: 5 },
+    house: { health: 999 }, // Halhatatlan épületek
+    boat: { health: 999 },
+    mine: { health: 999 }
 };
 
 // KÉPEK
@@ -263,14 +266,62 @@ function handleMapClick(mouseX, mouseY) {
 
 if (objectData[key]) {
     let target = objectData[key];
-    target.health--;
-    target.isShaking = true;
-    drawMap();
-    // CSAK a fát és a követ lehet sebezni
-    if (target.type === 'tree' || target.type === 'rock') {
+    target.health--;function handleMapClick(mouseX, mouseY) {
+    let mx = mouseX - mapOffsetX;
+    let my = mouseY - mapOffsetY;
+    let tx = Math.floor((my / (tileH / 2) + mx / (tileW / 2)) / 2);
+    let ty = Math.floor((my / (tileH / 2) - mx / (tileW / 2)) / 2);
+
+    const key = `${ty}_${tx}`;
+
+    // --- ÉPÍTÉS MÓD ---
+    if (isBuilding) {
+        // Ellenőrizzük, hogy a térképen belül vagyunk-e
+        if (!mapData[ty] || mapData[ty][tx] === undefined) {
+             isBuilding = null;
+             return;
+        }
+
+        const tileType = mapData[ty][tx];
+        const canPlaceOnLand = (tileType === 1 || tileType === 2 || tileType === 3);
+        const canPlaceOnWater = (tileType === 0);
+        
+        let allowed = false;
+        if (isBuilding.type === 'boat' && canPlaceOnWater) allowed = true;
+        if ((isBuilding.type === 'house' || isBuilding.type === 'mine') && canPlaceOnLand) allowed = true;
+
+        if (allowed && (!objectData || !objectData[key])) {
+            update(ref(db, `users/${currentPlayer}`), {
+                coin: increment(-isBuilding.price)
+            });
+
+            const newObj = { 
+                type: isBuilding.type, 
+                health: rewards[isBuilding.type].health 
+            };
+            set(ref(db, `islands/${currentPlayer}/${key}`), newObj);
+            
+            isBuilding = null;
+            isDragging = false; // Megakadályozza a kamera elugrását
+            return;
+        } else {
+            alert("Ide nem építheted ezt!");
+            isBuilding = null;
+            isDragging = false;
+            return;
+        }
+    }
+
+    // --- INTERAKCIÓ (Vágás/Ütés) ---
+    if (objectData && objectData[key]) {
+        let target = objectData[key];
+        
+        // Csak a fát és a követ lehet sebezni
+        if (target.type === 'tree' || target.type === 'rock') {
             target.health--;
             target.isShaking = true;
-            
+            drawMap();
+
             setTimeout(() => {
                 if (objectData[key]) {
                     objectData[key].isShaking = false;
@@ -287,11 +338,10 @@ if (objectData[key]) {
                 set(ref(db, `islands/${currentPlayer}/${key}`), null);
                 delete objectData[key];
             }
-            drawMap();
         } else {
-            // Ha épületre kattintasz, nem történik semmi (vagy kiírhatsz valamit)
             console.log("Ez egy épület, nem lehet lebontani!");
         }
+    }
 }
 
 // --- 5. RENDSZER ---

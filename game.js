@@ -253,17 +253,23 @@ window.refreshInventoryUI = async function() {
     // Csak az aktuális kategória elemeit jelenítjük meg
     categories[currentInvTab].forEach(item => {
         const count = inv[item.id] || 0;
-        const iconPath = fileNames[item.id] || `icons/${item.id}.png`;
-        const row = document.createElement('div');
-        row.className = "inv-row";
-        if (count === 0) {
-            row.style.opacity = "0.4"; 
+
+        let finalIcon;
+        if (fileNames[item.id]) {
+            // Ha a fileNames-ben már benne van a teljes út (pl: 'icons/fish.png')
+            finalIcon = fileNames[item.id];
         } else {
-            row.style.opacity = "1";
+            // Ha nincs benne, megpróbáljuk alapértelmezetten az icons mappából
+            finalIcon = `icons/${item.id}.png`;
         }
 
+        const row = document.createElement('div');
+        row.className = "inv-row";
+
+        row.style.opacity = (count === 0) ? "0.4" : "1";
+
         row.innerHTML = `
-            <img src="${fileNames[item.id] || 'icons/placeholder.png'}">
+            <img src="${finalIcon}" onerror="this.src='icons/placeholder.png'" style="width:30px; height:30px; margin-right:10px;">
             <span class="item-name">${item.name}</span>
             <span class="item-count">${count} db</span>
         `;

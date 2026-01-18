@@ -247,10 +247,23 @@ function startGame(user) {
     document.getElementById('ui-layer').style.display = 'flex'; 
     document.getElementById('player-name').innerText = user;
 
+
+    get(ref(db, `islands/${user}`)).then((snapshot) => {
+        if (!snapshot.exists()) {
+            // CSAK AKKOR generálunk, ha az adatbázisban MÉG SOHA nem létezett ez az ág
+            console.log("Új játékos, sziget generálása...");
+            objectData = createInitialIsland(user);
+        }
+    });
+
     // Sziget betöltése
     onValue(ref(db, `islands/${user}`), (snapshot) => {
-        objectData = snapshot.exists() ? snapshot.val() : createInitialIsland(user);
-        if (!objectData) objectData = {};
+        if (snapshot.exists()) {
+            objectData = snapshot.val();
+        } else {
+            // Ha létezik a játékos, de üres a sziget, ne generáljon újat!
+            objectData = {}; 
+        }
         drawMap();
     });
 

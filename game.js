@@ -195,26 +195,7 @@ window.removeWorker = function(key) {
 };
 
 
-function resizeCanvas() {
-    const ratio = window.devicePixelRatio || 1;
-    canvas.width = window.innerWidth * ratio;
-    canvas.height = window.innerHeight * ratio;
-    canvas.style.width = window.innerWidth + 'px';
-    canvas.style.height = window.innerHeight + 'px';
-    ctx.scale(ratio, ratio);
-    
-    let minDimension = Math.min(window.innerWidth, window.innerHeight);
 
-    if (window.innerWidth > window.innerHeight) {
-        // FEKVŐ MÓD: Még kisebb zoom kell, mert alacsony a kijelző
-        gameZoom = minDimension < 500 ? 0.4 : 0.7;
-    } else {
-        // ÁLLÓ MÓD: Maradhat a korábbi
-        gameZoom = minDimension < 600 ? 0.6 : 1.0;
-    }
-    
-    drawMap();
-}
 
 
 async function sendDiscordMessage(msg) {
@@ -624,4 +605,30 @@ window.onload = function() {
 };
 
 window.logout = function() { localStorage.clear(); location.reload(); };
+function resizeCanvas() {
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * ratio;
+    canvas.height = window.innerHeight * ratio;
+    canvas.style.width = window.innerWidth + 'px';
+    canvas.style.height = window.innerHeight + 'px';
+    ctx.scale(ratio, ratio);
+
+    // --- OKOS ZOOM LOGIKA ---
+    if (window.innerWidth > 1024) {
+        // ASZTALI GÉP: 100% méret, hogy ne legyen távoli
+        gameZoom = 1.0;
+    } else {
+        // MOBIL: Nézzük az arányokat
+        let isLandscape = window.innerWidth > window.innerHeight;
+        if (isLandscape) {
+            // Fekvő mobil: Nagyon kevés a hely magasságban, jobban ki kell zoomolni
+            gameZoom = 0.45; 
+        } else {
+            // Álló mobil: Itt a 0.7 általában ideális
+            gameZoom = 0.7;
+        }
+    }
+
+    if (currentPlayer) drawMap();
+}
 window.addEventListener('resize', resizeCanvas);

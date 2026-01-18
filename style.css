@@ -39,7 +39,6 @@ button {
     font-size: 18px; 
     cursor: pointer; 
     font-weight: bold; 
-    width: 100%; 
     transition: 0.2s; 
 }
 button:hover { background: #2ecc71; }
@@ -61,11 +60,19 @@ button:hover { background: #2ecc71; }
     top: 10px;
     left: 10px;
     right: 10px;
-    display: flex;
-    flex-wrap: wrap; /* Ha nem fér el egy sorban, tördeli */
+    display: none; /* <--- EZT ÍRD ÁT: Alapból rejtve, a startGame teszi majd flex-re */
+    flex-wrap: wrap;
     gap: 8px;
-    pointer-events: none; /* Átlátszó az egérnek a gombok között */
+    pointer-events: none;
     z-index: 100;
+}
+
+#login-screen button {
+    width: 100%;
+}
+
+#ui-layer button {
+    width: auto !important;
 }
 
 #ui-layer > * {

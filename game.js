@@ -76,13 +76,9 @@ function createInitialIsland(userId) {
     return newObjectData;
 }
 
-
-
-// --- 1. GENERÁLÁS ---
-function generateMap() {
+// Ezt írd a generateMap helyére:
+function setupBaseTerrain() {
     mapData = Array(mapSize).fill().map(() => Array(mapSize).fill(0));
-    objectData = Array(mapSize).fill().map(() => Array(mapSize).fill(null));
-
     const islandSize = 14; 
     const startPos = Math.floor((mapSize - islandSize) / 2);
     const endPos = startPos + islandSize;
@@ -90,20 +86,14 @@ function generateMap() {
     for (let y = startPos; y < endPos; y++) {
         for (let x = startPos; x < endPos; x++) {
             if (x === startPos || x === endPos - 1 || y === startPos || y === endPos - 1) {
-                mapData[y][x] = 3; 
+                mapData[y][x] = 3; // Homok a szélén
             } else {
-                mapData[y][x] = (Math.random() < 0.15) ? 2 : 1; 
-                let rand = Math.random();
-                if (rand < 0.12) {
-                    objectData[y][x] = { type: 'tree', health: 3 };
-                } else if (rand < 0.22) { 
-                    objectData[y][x] = { type: 'rock', health: 5 };
-                }
+                mapData[y][x] = (Math.random() < 0.15) ? 2 : 1; // Fű vagy Virág
             }
         }
     }
 }
-generateMap();
+setupBaseTerrain();
 
 let isDragging = false;
 let startDragX, startDragY, lastX, lastY;
@@ -131,7 +121,7 @@ function drawMap() {
                 screenY > -tileH && screenY < canvas.height + tileH) {
                 
                 drawTile(screenX, screenY, mapData[y][x]);
-
+                const key = `${y}_${x}`;          
                 let obj = objectData[y][x];
                 if (obj && images[obj.type].complete) {
                     let img = images[obj.type];
@@ -214,6 +204,7 @@ function handleMapClick(mouseX, mouseY) {
     let ty = Math.floor((my / (tileH / 2) - mx / (tileW / 2)) / 2);
 
     if (tx >= 0 && tx < mapSize && ty >= 0 && ty < mapSize) {
+        const key = `${ty}_${tx}`;
         let target = objectData[ty][tx];
         if (target) {
             target.health--;
@@ -277,10 +268,12 @@ function startGame(user) {
     // 1. Sziget betöltése vagy létrehozása
     onValue(ref(db, `islands/${user}`), (snapshot) => {
         if (snapshot.exists()) {
-            objectData = snapshot.val(); // Betöltjük a mentett fát/követ
+            objectData = snapshot.val(); 
         } else {
-            objectData = createInitialIsland(user); // Új játékosnak generálunk
+            objectData = createInitialIsland(user); 
         }
+        // Biztonsági mentés: ha valamiért mégis null lenne
+        if (!objectData) objectData = {}; 
         drawMap();
     });
 

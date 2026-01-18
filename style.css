@@ -185,6 +185,39 @@ button:hover { background: #2ecc71; }
     background: rgba(0,0,0,0.2);
 }
 
+/* Az NPC ablakon belüli gombok fix mérete */
+#npc-workplaces button {
+    width: 35px !important; 
+    height: 35px !important;
+    min-width: 35px !important;
+    padding: 0 !important;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 5px;
+    background: #9b59b6;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+}
+
+#npc-workplaces button:hover {
+    background: #8e44ad;
+}
+
+#npc-workplaces .shop-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #34495e;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+
+
 /* --- KILÉPÉS GOMB FIX --- */
 /* Itt a javítás: .logout-btn-t használunk a sima button helyett */
 #ui-layer .logout-btn { 

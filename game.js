@@ -84,6 +84,8 @@ const fileNames = {
     purple_jade: 'icons/purple_jade.png'
 };
 
+const MINING_TIME = 10000; // 10 másodperc
+
 Object.keys(fileNames).forEach(key => {
     images[key] = new Image();
     images[key].src = fileNames[key];
@@ -354,7 +356,50 @@ function getNpcStats() {
 }
 
 
+// Ez a függvény elindul egyszer, és folyamatosan fut a háttérben
+function startProductionCycle() {
+    setInterval(async () => {
+        // Végignézzük az összes objektumot a térképen
+        for (const key in objectData) {
+            const obj = objectData[key];
 
+            // Ha bánya és van benne munkás
+            if (obj.type === 'mine' && obj.workers > 0) {
+                await processMining(obj.workers);
+            }
+            
+            // Itt később jöhet a hajó is:
+            // if (obj.type === 'boat' && obj.workers > 0) { ... }
+        }
+    }, MINING_TIME);
+}
+
+// Maga a bányászati logika
+async function processMining(workerCount) {
+    // 70% Green Jade, 30% Purple Jade
+    const isPurple = Math.random() < 0.3;
+    const itemKey = isPurple ? 'purple_jade' : 'green_jade';
+    
+    // Mennyit kapunk? (munkások száma befolyásolhatja, most 1 munkás = 1 jade)
+    const amount = workerCount; 
+
+    console.log(`Bányászat sikeres: +${amount} ${itemKey}`);
+
+    // Mentés Firebase-be (increment-tel, hogy biztonságos legyen)
+    const invRef = ref(db, `users/${currentPlayer}/inventory/${itemKey}`);
+    
+    // Lekérjük a jelenlegi szintet és hozzáadjuk (vagy használhatod a Firebase increment függvényét is)
+    const snap = await get(invRef);
+    const current = snap.val() || 0;
+    
+    await set(invRef, current + amount);
+
+    // Ha nyitva az inventory, frissítsük a látványt
+    if (typeof refreshInventoryUI === "function" && 
+        document.getElementById('inventory-window').style.display === 'flex') {
+        refreshInventoryUI();
+    }
+}
 
 
 
@@ -666,7 +711,7 @@ async function startGame(user) {
 
     } catch (e) { console.error(e); }
 
-    // Üresen hagyva a kérésedre - ide jön majd a termelés, ha szólsz
+    startProductionCycle();
     setInterval(() => {
         if (!currentPlayer || !objectData) return;
     }, 10000);

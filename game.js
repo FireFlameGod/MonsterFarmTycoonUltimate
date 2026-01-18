@@ -163,16 +163,28 @@ window.addEventListener('mousemove', (e) => {
     if (isDragging) {
         let deltaX = e.clientX - lastX;
         let deltaY = e.clientY - lastY;
+        
         let newX = mapOffsetX + deltaX;
         let newY = mapOffsetY + deltaY;
 
+        // Térkép mérete pixelben
         const totalW = (mapSize * tileW) / 2;
         const totalH = (mapSize * tileH);
 
-        if (newX > window.innerWidth / 2 - totalW && newX < window.innerWidth / 2 + totalW) mapOffsetX = newX;
-        if (newY > -totalH / 2 && newY < totalH / 1.5) mapOffsetY = newY;
+        // VÍZSZINTES KORLÁT (X)
+        // Engedjük, hogy a sziget széle eljöjjön a képernyő közepéig
+        if (newX > window.innerWidth / 2 - totalW && newX < window.innerWidth / 2 + totalW) {
+            mapOffsetX = newX;
+        }
 
-        lastX = e.clientX; lastY = e.clientY;
+        // FÜGGŐLEGES KORLÁT (Y)
+        // Engedékenyebb határok, hogy ne ragadjon be
+        if (newY > -totalH && newY < totalH) {
+            mapOffsetY = newY;
+        }
+
+        lastX = e.clientX; 
+        lastY = e.clientY;
         drawMap();
     }
 });
@@ -204,11 +216,12 @@ function startGame(user) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('ui-layer').style.display = 'block';
     document.getElementById('player-name').innerText = user;
-    const centerX = 0; // Izometrikus (x-y) miatt a vízszintes közép 0 eltolásnál van
-    const centerY = (mapSize * (tileH / 2));
-    mapOffsetX = window.innerWidth / 2; 
-    mapOffsetY = (window.innerHeight / 2) - (mapSize * tileH / 4);
+    // Kamera alaphelyzetbe állítása:
+    mapOffsetX = window.innerWidth / 2;
+    mapOffsetY = 100; // Kezdjünk egy biztos pontról, ami benne van a korlátban
+
     resizeCanvas(); 
+    drawMap(); // Azonnali rajzolás
     onValue(ref(db, `users/${user}/money`), (snap) => {
         document.getElementById('money-display').innerText = snap.val();
     });

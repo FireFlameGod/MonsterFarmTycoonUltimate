@@ -100,22 +100,29 @@ function drawMap() {
             if (screenX > -tileW && screenX < canvas.width + tileW && 
                 screenY > -tileH && screenY < canvas.height + tileH) {
                 
-                // 1. Talaj rajzolása
                 drawTile(screenX, screenY, mapData[y][x]);
 
-                // 2. Objektumok (Fa/Kő) rajzolása - JAVÍTVA
                 let obj = objectData[y][x];
                 if (obj && images[obj.type].complete) {
                     let img = images[obj.type];
                     
-                    // Először kiszámoljuk a méretet
                     let scale = (obj.type === 'tree') ? 1.0 : 0.7; 
-                    let w = tileW * scale; // Most már létezik a 'w' mielőtt a 'h'-hoz használnánk!
+                    let w = tileW * scale;
                     let h = (img.height * (w / img.width));
                     
+                    // --- Megtartott Offsetek ---
                     let yOffset = (obj.type === 'tree') ? 40 : 45; 
 
-                    ctx.drawImage(img, screenX - w/2, screenY - h + (tileH / 2) + yOffset, w, h);
+                    // --- RÁZKÓDÁS SZÁMÍTÁSA ---
+                    let shakeX = 0;
+                    if (obj.isShaking) {
+                        shakeX = Math.random() * 10 - 5; // -5 és 5 pixel között rángatja
+                        ctx.globalAlpha = 0.6; // Kicsit átlátszóbb ütéskor
+                    }
+
+                    ctx.drawImage(img, screenX - w/2 + shakeX, screenY - h + (tileH / 2) + yOffset, w, h);
+                    
+                    ctx.globalAlpha = 1.0; // Visszaállítás
                 }
             }
         }
@@ -181,13 +188,26 @@ function handleMapClick(mouseX, mouseY) {
         let target = objectData[ty][tx];
         if (target) {
             target.health--;
+            
+            // --- RÁZKÓDÁS BEKAPCSOLÁSA ---
+            target.isShaking = true;
+            drawMap(); // Azonnali frissítés, hogy látszódjon az ütés
+
+            // 100ms után leállítjuk a rázkódást
+            setTimeout(() => {
+                if (objectData[ty] && objectData[ty][tx]) {
+                    objectData[ty][tx].isShaking = false;
+                    drawMap();
+                }
+            }, 100);
+
             console.log(`Találat! ${target.type} maradék élet: ${target.health}`);
+            
             if (target.health <= 0) {
                 let reward = (target.type === 'tree' ? 10 : 20);
                 update(ref(db, `users/${currentPlayer}`), { money: increment(reward) });
                 objectData[ty][tx] = null;
             }
-            drawMap();
         }
     }
 }

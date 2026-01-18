@@ -29,8 +29,8 @@ const tileH = 64;
 const mapSize = 30; 
 const visualOverlap = 20;
 
-let mapOffsetX = window.innerWidth / 2; 
-let mapOffsetY = -500; 
+//let mapOffsetX = window.innerWidth / 2; 
+//let mapOffsetY = -500; 
 
 let mapData = [];
 let objectData = {

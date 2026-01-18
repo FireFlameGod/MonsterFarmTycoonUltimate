@@ -423,12 +423,16 @@ async function calculateOfflineEarnings() {
                 const rewardDiv = document.getElementById('afk-rewards');
                 
                 if (modal && rewardDiv) {
+                    // Megkeressük a már betöltött képek forrását (src)
+                    const greenSrc = images['green_jade'] ? images['green_jade'].src : 'assets/green_jade.png';
+                    const purpleSrc = images['purple_jade'] ? images['purple_jade'].src : 'assets/purple_jade.png';
+
                     rewardDiv.innerHTML = `
                         <p style="display:flex; align-items:center; justify-content:center; gap:10px;">
-                            <img src="assets/green_jade.png" width="30"> <b>${totalGreenJade}</b> Green Jade
+                            <img src="${greenSrc}" width="30"> <b>${totalGreenJade}</b> Green Jade
                         </p>
                         <p style="display:flex; align-items:center; justify-content:center; gap:10px;">
-                            <img src="assets/purple_jade.png" width="30"> <b>${totalPurpleJade}</b> Purple Jade
+                            <img src="${purpleSrc}" width="30"> <b>${totalPurpleJade}</b> Purple Jade
                         </p>
                     `;
                     modal.style.display = 'block';

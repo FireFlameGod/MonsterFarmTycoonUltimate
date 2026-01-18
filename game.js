@@ -366,7 +366,10 @@ function startProductionCycle() {
 
             // Ha bánya és van benne munkás
             if (obj.type === 'mine' && obj.workers > 0) {
-                 await processMining(obj.workers, obj.x, obj.y); // Itt küldjük el az x, y-t
+                const coords = key.split('_');
+                const y = parseInt(coords[0]);
+                const x = parseInt(coords[1]);
+                await processMining(obj.workers, x, y);
             }
             
             // Itt később jöhet a hajó is:
@@ -395,6 +398,16 @@ async function processMining(workerCount, mineX, mineY) {
     createFloatingIcon(mineX, mineY, itemKey);
     await set(invRef, current + amount);
 
+    / Képernyő koordináták kiszámolása az animációhoz
+    const zW = tileW * gameZoom;
+    const zH = tileH * gameZoom;
+    // Izometrikus képlet
+    let screenX = (objX - objY) * (zW / 2) + mapOffsetX;
+    let screenY = (objX + objY) * (zH / 2) + mapOffsetY;
+
+    // Indítjuk az ikont a kiszámolt ponton
+    createFloatingIcon(screenX, screenY, itemKey);
+
     // Ha nyitva az inventory, frissítsük a látványt
     if (typeof refreshInventoryUI === "function" && 
         document.getElementById('inventory-window').style.display === 'flex') {
@@ -402,13 +415,13 @@ async function processMining(workerCount, mineX, mineY) {
     }
 }
 
-function createFloatingIcon(x, y, itemId) {
+function createFloatingIcon(screenX, screenY, itemId) {
     floatingIcons.push({
-        x: x * tileSize + tileSize / 2, // A bánya közepe
-        y: y * tileSize,
+        x: screenX, 
+        y: screenY - 50, // Egy kicsit az épület felett induljon
         itemId: itemId,
         opacity: 1,
-        life: 1.0 // 1.0-tól 0-ig csökken
+        life: 1.0
     });
 }
 

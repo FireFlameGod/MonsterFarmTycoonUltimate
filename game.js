@@ -86,7 +86,7 @@ const fileNames = {
 
 const MINING_TIME = 10000; // 10 másodperc
 let floatingIcons = [];
-
+let isGameRunning = true;
 Object.keys(fileNames).forEach(key => {
     images[key] = new Image();
     images[key].src = fileNames[key];
@@ -295,6 +295,16 @@ window.refreshInventoryUI = async function() {
     });
 };
 
+function gameLoop() {
+    if (!isGameRunning) return;
+
+    drawMap(); 
+
+    // Ez a sor gondoskodik róla, hogy csak akkor rajzoljon, ha kell
+    requestAnimationFrame(gameLoop);
+}
+
+
 function showStatus(text) {
     const el = document.getElementById('game-status');
     el.innerText = text;
@@ -493,7 +503,7 @@ function createInitialIsland(userId) {
 }
 
 function drawMap() {
-    if (!ctx) return;
+    if (!ctx || !objectData) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#000000"; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);

@@ -154,14 +154,14 @@ window.addEventListener('mousemove', (e) => {
         let nextY = mapOffsetY + deltaY;
 
         // KORLÁTOK: A sziget méretéből számolva (Hogy ne tévedj el a sötétben)
-        const limitX = (mapSize * tileW) / 2;
+        const limitX = (mapSize * tileW) / 4;
         const limitY = (mapSize * tileH) / 2;
 
         // Csak akkor frissítünk, ha határon belül vagyunk
         if (nextX > -limitX && nextX < window.innerWidth + limitX) {
             mapOffsetX = nextX;
         }
-        if (nextY > -limitY && nextY < window.innerHeight + limitY) {
+        if (nextY > -limitY && nextY < window.innerHeight + limitY + 100) {
             mapOffsetY = nextY;
         }
 

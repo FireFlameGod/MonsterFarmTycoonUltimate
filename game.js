@@ -617,5 +617,4 @@ window.onload = function() {
 };
 
 window.logout = function() { localStorage.clear(); location.reload(); };
-function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; drawMap(); }
 window.addEventListener('resize', resizeCanvas);

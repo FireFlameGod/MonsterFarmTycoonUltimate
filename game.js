@@ -25,7 +25,7 @@ const tileW = 128;
 const tileH = 64; 
 let mapOffsetX = window.innerWidth / 2; 
 let mapOffsetY = 150;
-
+const visualOverlap = 2
 // KÉPEK BETÖLTÉSE
 // Létrehozunk egy objektumot a képeknek
 const images = {};
@@ -84,23 +84,25 @@ function drawMap() {
 
 function drawTile(x, y, type) {
     if (type === 1) {
-        ctx.strokeStyle = "red";
-        ctx.strokeRect(x - tileW / 2, y, tileW, tileH);
         if (images.grass.complete) {
-            ctx.drawImage(images.grass, x - tileW / 2, y, tileW, tileH);
-        } else {
-            ctx.fillStyle = "#2ecc71";
-            ctx.fill();
-        }
+            // Itt a trükk: a magasságot (tileH) nem kényszerítjük 64-re, 
+            // hanem hagyjuk, hogy a kép eredeti magassága érvényesüljön.
+            // A visualOverlap-al pedig picit egymásra húzzuk őket.
+            ctx.drawImage(
+                images.grass, 
+                x - (tileW / 2) - (visualOverlap / 2), 
+                y - (visualOverlap / 2), 
+                tileW + visualOverlap, 
+                images.grass.height * (tileW / images.grass.width) + visualOverlap
+            );
     } else {
-        // VÍZ (Marad rajzolva, vagy ide is tehetsz water.png-t később)
         ctx.beginPath();
         ctx.moveTo(x, y);
         ctx.lineTo(x + tileW / 2, y + tileH / 2);
         ctx.lineTo(x, y + tileH);
         ctx.lineTo(x - tileW / 2, y + tileH / 2);
         ctx.closePath();
-        ctx.fillStyle = "rgba(52, 152, 219, 0.3)";
+        ctx.fillStyle = "rgba(52, 152, 219, 0.2)";
         ctx.fill();
     }
 }

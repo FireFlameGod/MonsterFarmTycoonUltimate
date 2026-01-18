@@ -84,21 +84,28 @@ function drawMap() {
 
 function drawTile(x, y, type) {
     if (type === 1) {
+        // --- FŰ ---
         if (images.grass.complete) {
-            // Itt a trükk: a magasságot (tileH) nem kényszerítjük 64-re, 
-            // hanem hagyjuk, hogy a kép eredeti magassága érvényesüljön.
-            // A visualOverlap-al pedig picit egymásra húzzuk őket.
+            // Kép kirajzolása (ha már betöltött)
             ctx.drawImage(
                 images.grass, 
                 x - (tileW / 2) - (visualOverlap / 2), 
                 y - (visualOverlap / 2), 
                 tileW + visualOverlap, 
                 images.grass.height * (tileW / images.grass.width) + visualOverlap
-            
             );
+        } else {
+            // Ha még tölt a kép, rajzoljunk egy zöld alapot, hogy ne legyen lyukas a sziget
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + tileW / 2, y + tileH / 2);
+            ctx.lineTo(x, y + tileH);
+            ctx.lineTo(x - tileW / 2, y + tileH / 2);
+            ctx.fillStyle = "#2ecc71";
+            ctx.fill();
         }
-    }
     } else {
+        // --- VÍZ ---
         ctx.beginPath();
         ctx.moveTo(x, y);
         ctx.lineTo(x + tileW / 2, y + tileH / 2);

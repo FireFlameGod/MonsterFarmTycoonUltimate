@@ -22,10 +22,11 @@ let currentPlayer = null;
 
 const tileW = 128; 
 const tileH = 64; 
+const mapSize = 30; 
+const visualOverlap = 20;
 let mapOffsetX = window.innerWidth / 2; 
 let mapOffsetY = 150;
-const visualOverlap = 20; // FIX: Ezt többet nem írom át :)
-const mapSize = 30; 
+
 let mapData = [];
 let objectData = [];
 
@@ -62,10 +63,9 @@ function generateMap() {
             } else {
                 mapData[y][x] = (Math.random() < 0.15) ? 2 : 1; 
                 let rand = Math.random();
-                // Megemeltem az esélyeket, hogy biztosan láss köveket is
                 if (rand < 0.12) {
                     objectData[y][x] = { type: 'tree', health: 3 };
-                } else if (rand < 0.20) { // Most már több kő lesz
+                } else if (rand < 0.22) { 
                     objectData[y][x] = { type: 'rock', health: 5 };
                 }
             }
@@ -75,8 +75,7 @@ function generateMap() {
 generateMap();
 
 let isDragging = false;
-let startDragX, startDragY;
-let lastX, lastY;
+let startDragX, startDragY, lastX, lastY;
 
 // --- 2. JÁTÉKMOTOR ---
 function resizeCanvas() {
@@ -92,8 +91,8 @@ function drawMap() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.imageSmoothingEnabled = false; 
 
-    for (let y = 0; y < mapData.length; y++) {
-        for (let x = 0; x < mapData[y].length; x++) {
+    for (let y = 0; y < mapSize; y++) {
+        for (let x = 0; x < mapSize; x++) {
             let screenX = (x - y) * (tileW / 2) + mapOffsetX;
             let screenY = (x + y) * (tileH / 2) + mapOffsetY;
             
@@ -105,24 +104,19 @@ function drawMap() {
                 let obj = objectData[y][x];
                 if (obj && images[obj.type].complete) {
                     let img = images[obj.type];
-                    
                     let scale = (obj.type === 'tree') ? 1.0 : 0.7; 
                     let w = tileW * scale;
                     let h = (img.height * (w / img.width));
-                    
-                    // --- Megtartott Offsetek ---
                     let yOffset = (obj.type === 'tree') ? 40 : 45; 
 
-                    // --- RÁZKÓDÁS SZÁMÍTÁSA ---
                     let shakeX = 0;
                     if (obj.isShaking) {
-                        shakeX = Math.random() * 10 - 5; // -5 és 5 pixel között rángatja
-                        ctx.globalAlpha = 0.6; // Kicsit átlátszóbb ütéskor
+                        shakeX = Math.random() * 10 - 5;
+                        ctx.globalAlpha = 0.6;
                     }
 
                     ctx.drawImage(img, screenX - w/2 + shakeX, screenY - h + (tileH / 2) + yOffset, w, h);
-                    
-                    ctx.globalAlpha = 1.0; // Visszaállítás
+                    ctx.globalAlpha = 1.0;
                 }
             }
         }
@@ -141,7 +135,7 @@ function drawTile(x, y, type) {
     }
 }
 
-// --- 3. INPUT (JAVÍTOTT MOZGÁS) ---
+// --- 3. INPUT (KAMERA BOUND JAVÍTVA) ---
 canvas.addEventListener('mousedown', (e) => {
     isDragging = true;
     startDragX = e.clientX;
@@ -155,8 +149,13 @@ window.addEventListener('mousemove', (e) => {
         let deltaX = e.clientX - lastX;
         let deltaY = e.clientY - lastY;
         
-        mapOffsetX += deltaX;
-        mapOffsetY += deltaY;
+        let nextX = mapOffsetX + deltaX;
+        let nextY = mapOffsetY + deltaY;
+
+        // Kamera korlát (Bound) - nem engedi elveszni a szigetet
+        const margin = 400; 
+        if (nextX > -margin && nextX < window.innerWidth + margin) mapOffsetX = nextX;
+        if (nextY > -margin && nextY < window.innerHeight + margin) mapOffsetY = nextY;
 
         lastX = e.clientX; 
         lastY = e.clientY;
@@ -166,13 +165,8 @@ window.addEventListener('mousemove', (e) => {
 
 window.addEventListener('mouseup', (e) => {
     if (isDragging) {
-        // Megnézzük, mennyit mozdult el az egér a lenyomás óta
         let moveDist = Math.hypot(e.clientX - startDragX, e.clientY - startDragY);
-        
-        // Ha 5 pixelnél kevesebbet mozdult, az kattintás (bányászat)
-        if (moveDist < 5) {
-            handleMapClick(e.clientX, e.clientY);
-        }
+        if (moveDist < 5) handleMapClick(e.clientX, e.clientY);
     }
     isDragging = false;
 });
@@ -180,7 +174,6 @@ window.addEventListener('mouseup', (e) => {
 function handleMapClick(mouseX, mouseY) {
     let mx = mouseX - mapOffsetX;
     let my = mouseY - mapOffsetY;
-
     let tx = Math.floor((my / (tileH / 2) + mx / (tileW / 2)) / 2);
     let ty = Math.floor((my / (tileH / 2) - mx / (tileW / 2)) / 2);
 
@@ -188,10 +181,9 @@ function handleMapClick(mouseX, mouseY) {
         let target = objectData[ty][tx];
         if (target) {
             target.health--;
-            
-            // Rázkódás effekt
             target.isShaking = true;
             drawMap();
+            
             setTimeout(() => {
                 if (objectData[ty] && objectData[ty][tx]) {
                     objectData[ty][tx].isShaking = false;
@@ -201,19 +193,11 @@ function handleMapClick(mouseX, mouseY) {
 
             if (target.health <= 0) {
                 let isTree = (target.type === 'tree');
-                
-                // Jutalmak meghatározása
-                let moneyReward = isTree ? 10 : 20;
-                let woodReward = isTree ? 5 : 0;
-                let stoneReward = isTree ? 0 : 3;
-
-                // Firebase frissítés (egyszerre az összes érték)
                 update(ref(db, `users/${currentPlayer}`), {
-                    money: increment(moneyReward),
-                    wood: increment(woodReward),
-                    stone: increment(stoneReward)
+                    money: increment(isTree ? 10 : 20),
+                    wood: increment(isTree ? 5 : 0),
+                    stone: increment(isTree ? 0 : 3)
                 });
-
                 objectData[ty][tx] = null;
             }
             drawMap();
@@ -232,7 +216,7 @@ window.loginOrRegister = function() {
             if (snapshot.val().password === pass) startGame(user);
             else document.getElementById('error-msg').style.display = 'block';
         } else {
-            set(ref(db, 'users/' + user), { username: user, password: pass, money: 100, level: 1 }).then(() => startGame(user));
+            set(ref(db, 'users/' + user), { username: user, password: pass, money: 100, wood: 0, stone: 0 }).then(() => startGame(user));
         }
     });
 };
@@ -241,16 +225,17 @@ function startGame(user) {
     currentPlayer = user;
     localStorage.setItem('mf_user', user);
     localStorage.setItem('mf_pass', document.getElementById('password').value);
+    
     document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('ui-layer').style.display = 'block';
+    const ui = document.getElementById('ui-layer');
+    ui.style.display = 'flex'; // Itt flex kell a szép elrendezéshez
+    
     document.getElementById('player-name').innerText = user;
 
-    // Sziget központosítása
     mapOffsetX = window.innerWidth / 2;
-    mapOffsetY = window.innerHeight / 2 - (mapSize * tileH / 4);
+    mapOffsetY = 100;
 
     resizeCanvas(); 
-    // Összes érték figyelése Firebase-ből
     onValue(ref(db, `users/${user}`), (snap) => {
         const data = snap.val();
         if (data) {
@@ -262,17 +247,12 @@ function startGame(user) {
 }
 
 window.onload = function() {
-    const u = localStorage.getItem('mf_user');
-    const p = localStorage.getItem('mf_pass');
+    const u = localStorage.getItem('mf_user'), p = localStorage.getItem('mf_pass');
     if(u && p) {
         document.getElementById('username').value = u;
         document.getElementById('password').value = p;
         window.loginOrRegister();
     }
-};
-
-window.addMoney = function() {
-    if(currentPlayer) update(ref(db, `users/${currentPlayer}`), { money: increment(50) });
 };
 
 window.logout = function() {

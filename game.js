@@ -204,6 +204,10 @@ function startGame(user) {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('ui-layer').style.display = 'block';
     document.getElementById('player-name').innerText = user;
+    const centerX = 0; // Izometrikus (x-y) miatt a vízszintes közép 0 eltolásnál van
+    const centerY = (mapSize * (tileH / 2));
+    mapOffsetX = window.innerWidth / 2; 
+    mapOffsetY = (window.innerHeight / 2) - (mapSize * tileH / 4);
     resizeCanvas(); 
     onValue(ref(db, `users/${user}/money`), (snap) => {
         document.getElementById('money-display').innerText = snap.val();

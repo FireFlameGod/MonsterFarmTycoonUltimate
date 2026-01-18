@@ -250,7 +250,7 @@ function startGame(user) {
 
     // Kezdő középpont beállítása
     mapOffsetX = window.innerWidth / 2;
-    mapOffsetY = window.innerHeight / 2 - (mapSize * tileH / 4);
+    mapOffsetY = 50;
 
     resizeCanvas(); 
     onValue(ref(db, `users/${user}`), (snap) => {

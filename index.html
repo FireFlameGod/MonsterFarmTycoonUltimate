@@ -26,6 +26,7 @@
         <div class="res-box">⭐ <span id="xp-display">0</span> XP</div>
         <button onclick="toggleShop()" class="shop-btn">🛒 Bolt</button>
         <button id="admin-cheat-btn" class="cheat-btn" onclick="cheatMoney()" style="display: none;">+1000 CC (Cheat)</button>
+        <button id="npc-manage-btn" class="shop-btn" style="display: none; background: #9b59b6; color: white; top: 120px;">👥 NPC Kezelés</button>
         <button onclick="logout()" class="logout-btn">Kilépés</button>
     </div>
 
@@ -35,6 +36,18 @@
             <h1 style="color: #f1c40f; margin-bottom: 5px;">SZINTLÉPÉS! 🎉</h1>
             <p style="font-size: 18px;">Gratulálunk, elérted a(z) <span id="new-level-number" style="font-weight: bold; color: #f1c40f;"></span>. szintet!</p>
             <button onclick="closeLevelUp()" style="background: #f1c40f; color: #000; margin-top: 15px;">Szuper!</button>
+        </div>
+    </div>
+
+
+    <div id="npc-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeNpcModal()">&times;</span>
+            <h2>NPC Menedzsment</h2>
+            <p>Szabad munkások: <span id="free-npc-count">0</span> / <span id="total-npc-count">0</span></p>
+            <hr>
+            <div id="npc-workplaces">
+                </div>
         </div>
     </div>
 

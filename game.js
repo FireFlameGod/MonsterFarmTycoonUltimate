@@ -27,7 +27,15 @@ let mapOffsetX = window.innerWidth / 2;
 let mapOffsetY = -500; 
 
 let mapData = [];
-let objectData = {}; 
+let objectData = {
+  "y_x": {
+    "type": "mine",
+    "lvl": 1,
+    "workers": 1, // Hány NPC van ott jelenleg
+    "maxWorkers": 1 // Mennyi a limit (Lvl 1-nél 1)
+  }
+}; 
+
 let isBuilding = null;
 let lastLevel = null;
 const rewards = {
@@ -38,6 +46,16 @@ const rewards = {
     mine: { health: 999 }
 };
 
+const userData = {
+    coin: 1000,
+    xp: 500,
+    inventory: {
+        iron_ore: 5,   // Bányából
+        gold_ore: 1,   // Ritka bányából
+        carp: 3        // Hajóból (ponty)
+    },
+    unlocked_npc_slots: 1 // A ház adja
+};
 const images = {};
 const fileNames = {
     grass: 'grass.png',
@@ -48,7 +66,12 @@ const fileNames = {
     rock: 'rock.png',
     house: 'assets/house.png',
     boat: 'assets/boat.png',
-    mine: 'assets/mine.png'
+    mine: 'assets/mine.png',
+    iron_ore: new Image(),
+    gold_ore: new Image(),
+    fish_common: new Image(),
+    fish_rare: new Image(),
+    goblin: new Image()
 };
 
 Object.keys(fileNames).forEach(key => {
@@ -122,6 +145,55 @@ window.closeLevelUp = function() {
     document.getElementById('level-up-modal').style.display = 'none';
 };
 
+window.openNpcModal = function() {
+    const stats = getNpcStats();
+    document.getElementById('free-npc-count').innerText = stats.free;
+    document.getElementById('total-npc-count').innerText = stats.total;
+    
+    const container = document.getElementById('npc-workplaces');
+    container.innerHTML = ""; // Alaphelyzet
+
+    Object.keys(objectData).forEach(key => {
+        const obj = objectData[key];
+        if (obj.type === 'mine' || obj.type === 'boat') {
+            const div = document.createElement('div');
+            div.className = 'shop-item';
+            div.innerHTML = `
+                <span>${obj.type === 'mine' ? '⛏️ Bánya' : '⛵ Hajó'} (Munkás: ${obj.workers || 0}/1)</span>
+                <button onclick="assignWorker('${key}')" ${stats.free > 0 && (obj.workers || 0) < 1 ? '' : 'disabled'}>+</button>
+                <button onclick="removeWorker('${key}')" ${(obj.workers || 0) > 0 ? '' : 'disabled'}>-</button>
+            `;
+            container.appendChild(div);
+        }
+    });
+    
+    document.getElementById('npc-modal').style.display = 'flex';
+}
+
+window.closeNpcModal = function() {
+    document.getElementById('npc-modal').style.display = 'none';
+}
+
+window.assignWorker = function(key) {
+    const stats = getNpcStats();
+    if (stats.free > 0) {
+        update(ref(db, `islands/${currentPlayer}/${key}`), {
+            workers: increment(1)
+        });
+        setTimeout(openNpcModal, 200); // Ablak frissítése
+    }
+};
+
+window.removeWorker = function(key) {
+    if (objectData[key].workers > 0) {
+        update(ref(db, `islands/${currentPlayer}/${key}`), {
+            workers: increment(-1)
+        });
+        setTimeout(openNpcModal, 200);
+    }
+};
+
+
 
 async function sendDiscordMessage(msg) {
     const webhookURL = "IDE_JÖN_A_WEBHOOK_URL";
@@ -154,7 +226,27 @@ function updateShopAvailability(objects) {
     });
 }
 
+function getNpcStats() {
+    let totalCapacity = 0;
+    let currentlyWorking = 0;
 
+    Object.values(objectData).forEach(obj => {
+        // A ház adja a férőhelyet
+        if (obj.type === 'house') {
+            totalCapacity += (obj.lvl === 1 ? 2 : 4); // Lvl 1: 2 slot, Lvl 2: 4 slot
+        }
+        // Megszámoljuk a dolgozókat a bányákban és hajókon
+        if (obj.type === 'mine' || obj.type === 'boat') {
+            currentlyWorking += (obj.workers || 0);
+        }
+    });
+
+    return {
+        total: totalCapacity,
+        busy: currentlyWorking,
+        free: totalCapacity - currentlyWorking
+    };
+}
 
 function setupBaseTerrain() {
     mapData = Array(mapSize).fill().map(() => Array(mapSize).fill(0));
@@ -383,6 +475,11 @@ async function startGame(user) {
         });
         onValue(ref(db, `users/${user}`), (snap) => {
             const d = snap.val();
+            const hasHouse = Object.values(data).some(o => o.type === 'house');
+            const npcBtn = document.getElementById('npc-manage-btn');
+            if (npcBtn) {
+                npcBtn.style.display = hasHouse ? 'block' : 'none';
+            }
             if (d) {
                 const xp = d.xp || 0;
                 const currentLevel = calculateLevel(xp); // Kiszámoljuk a szintet az XP-ből

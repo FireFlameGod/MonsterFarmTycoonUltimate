@@ -536,8 +536,8 @@ function drawMap() {
                     let scale = 1.0;
                     let yOffset = 40;
                     let bounce = 0;
-                    let squash = 0;
-                    let stretch = 0;
+                    let squashW = 0; // Itt adjuk meg nekik a 0 alapértéket
+                    let squashH = 0;
                     // Beállítások típusonként
                     if (obj.type === 'tree') { scale = 1.3; yOffset = 40; } 
                     else if (obj.type === 'rock') { scale = 0.9; yOffset = 55; } 

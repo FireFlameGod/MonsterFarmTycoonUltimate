@@ -245,7 +245,7 @@ window.loginOrRegister = function() {
     });
 };
 
-function startGame(user) {
+async function startGame(user) {
     currentPlayer = user;
     localStorage.setItem('mf_user', user);
     localStorage.setItem('mf_pass', document.getElementById('password').value);

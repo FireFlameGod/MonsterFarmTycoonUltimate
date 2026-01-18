@@ -255,27 +255,34 @@ function startGame(user) {
     document.getElementById('player-name').innerText = user;
 
 
-    // EGYSZERI ELLENŐRZÉS: Kell-e generálni?
-    get(ref(db, `users/${user}`)).then((snap) => {
-        const userData = snap.val();
-        if (userData && userData.hasIsland === false) {
-            console.log("Első belépés, sziget létrehozása...");
-            objectData = createInitialIsland(user);
-            // Miután generáltunk, átállítjuk TRUE-ra, így többet nem fog
-            update(ref(db, `users/${user}`), { hasIsland: true });
-        }
-    });
+    try {
+        // 1. Megnézzük, járt-e már itt a játékos
+        const userSnap = await get(ref(db, `users/${user}`));
+        const userData = userSnap.val();
 
-    // FOLYAMATOS FIGYELÉS: Sziget tárgyai
-    onValue(ref(db, `islands/${user}`), (snapshot) => {
-        if (snapshot.exists()) {
-            objectData = snapshot.val();
-        } else {
-            // Ha az adatbázis üres, de a hasIsland true, akkor ez egy üres sziget!
-            objectData = {}; 
+        // 2. Ha még nincs szigete (false vagy hiányzik), generálunk EGYETLEN EGYSZER
+        if (!userData.hasIsland) {
+            console.log("Sziget generálása első alkalommal...");
+            const newIsland = createInitialIsland(user);
+            objectData = newIsland;
+            // Elmentjük, hogy már van szigete
+            await update(ref(db, `users/${user}`), { hasIsland: true });
         }
-        drawMap();
-    });
+
+        // 3. CSAK EZUTÁN indítjuk el a folyamatos figyelőt
+        onValue(ref(db, `islands/${user}`), (snapshot) => {
+            if (snapshot.exists()) {
+                objectData = snapshot.val();
+            } else {
+                // Ha a hasIsland true, de nincs adat, akkor tényleg üres a sziget
+                objectData = {}; 
+            }
+            drawMap();
+        });
+
+    } catch (error) {
+        console.error("Hiba az indulásnál:", error);
+    }
 
     // Erőforrások betöltése
     onValue(ref(db, `users/${user}`), (snap) => {

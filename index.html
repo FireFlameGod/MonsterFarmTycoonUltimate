@@ -28,23 +28,26 @@
 
     <button onclick="toggleShop()" class="shop-btn">🛒 Bolt</button>
     <button class="cheat-btn" onclick="cheatMoney()">+1000 CC (Cheat)</button>
-    
-    <div id="shop-window" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close" onclick="toggleShop()">&times;</span>
-            <h2>Commerce Shop</h2>
-            <div class="shop-items">
-                <div class="shop-item">
-                    <p>🏠 Ház (200 CC)</p>
-                    <button onclick="buyItem('house', 200)">Vásárlás</button>
-                </div>
-                <div class="shop-item">
-                    <p>⛵ Hajó (500 CC)</p>
-                    <button onclick="buyItem('boat', 500)">Vásárlás</button>
-                </div>
-                <div class="shop-item">
-                    <p>⛏️ Bánya (1000 CC)</p>
-                    <button onclick="buyItem('mine', 1000)">Vásárlás</button>
+
+    <div id="shop-window" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="toggleShop()">&times;</span>
+        <h2>Épületek</h2>
+        <div id="shop-items" style="display: flex; flex-direction: column; gap: 10px;">
+            <div class="shop-item" id="item-house">
+                <img src="assets/house.png" style="width: 50px; height: 50px; vertical-align: middle;">
+                <span>Ház (500 CC)</span>
+                <button onclick="buyItem('house', 500)" id="btn-house" style="width: auto; padding: 5px 10px; font-size: 14px;">Vétel</button>
+            </div>
+            <div class="shop-item" id="item-mine">
+                <img src="assets/mine.png" style="width: 50px; height: 50px; vertical-align: middle;">
+                <span>Bánya (1000 CC)</span>
+                <button onclick="buyItem('mine', 1000)" id="btn-mine" style="width: auto; padding: 5px 10px; font-size: 14px;">Vétel</button>
+            </div>
+            <div class="shop-item" id="item-boat">
+                <img src="assets/boat.png" style="width: 50px; height: 50px; vertical-align: middle;">
+                <span>Hajó (300 CC)</span>
+                <button onclick="buyItem('boat', 300)" id="btn-boat" style="width: auto; padding: 5px 10px; font-size: 14px;">Vétel</button>
                 </div>
             </div>
         </div>

@@ -90,6 +90,27 @@ window.buyItem = function(type, price) {
     });
 };
 
+function updateShopAvailability(objects) {
+    const purchasedTypes = Object.values(objects).map(o => o.type);
+    
+    ['house', 'mine', 'boat'].forEach(type => {
+        const btn = document.getElementById('btn-' + type);
+        if (btn) {
+            if (purchasedTypes.includes(type)) {
+                btn.innerText = "Megvéve";
+                btn.disabled = true;
+                btn.style.background = "#7f8c8d";
+            } else {
+                btn.innerText = "Vétel";
+                btn.disabled = false;
+                btn.style.background = "#27ae60";
+            }
+        }
+    });
+}
+
+
+
 function setupBaseTerrain() {
     mapData = Array(mapSize).fill().map(() => Array(mapSize).fill(0));
     const islandSize = 14; 
@@ -282,6 +303,7 @@ async function startGame(user) {
         }
         onValue(ref(db, `islands/${user}`), (snap) => {
             objectData = snap.exists() ? snap.val() : {};
+            updateShopAvailability(objectData); // Minden változásnál frissítjük a boltot
             drawMap();
         });
         onValue(ref(db, `users/${user}`), (snap) => {

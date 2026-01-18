@@ -92,19 +92,15 @@ button:hover { background: #2ecc71; }
 }
 
 .shop-btn {
-    position: fixed;
-    top: 70px; /* Az UI sáv alatt 10 pixellel */
-    right: 20px;
+    margin-left: 20px;
     background: #ffcc00;
     color: #000;
     border: 2px solid #b8860b;
-    padding: 10px 20px;
+    padding: 5px 15px;
     border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
-    z-index: 1100; /* Magasabb, mint a canvas és az UI layer */
-    width: auto;   /* Ne legyen 100%-os szélességű */
-    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    width: auto !important;
 }
 
 .shop-btn:hover {
@@ -154,12 +150,15 @@ button:hover { background: #2ecc71; }
     position: fixed;
     bottom: 20px;
     right: 20px;
-    width: auto !important;
     background: #e67e22;
+    color: white;
+    border: none;
     padding: 8px 15px;
-    font-size: 14px;
-    opacity: 0.6;
+    border-radius: 5px;
+    cursor: pointer;
+    opacity: 0.7;
     z-index: 1000;
+    display: none; /* Fontos: alapból ez is rejtve! */
 }
 .cheat-btn:hover {
     opacity: 1;

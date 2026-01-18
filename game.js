@@ -154,14 +154,22 @@ window.addEventListener('mousemove', (e) => {
         let nextY = mapOffsetY + deltaY;
 
         // KORLÁTOK: A sziget méretéből számolva (Hogy ne tévedj el a sötétben)
-        const limitX = (mapSize * tileW) / 4;
-        const limitY = (mapSize * tileH) / 2;
+        const mapWidthPixels = mapSize * tileW / 2;
+        const mapHeightPixels = mapSize * tileH / 2;
 
-        // Csak akkor frissítünk, ha határon belül vagyunk
+        // Vízszintes: maradhat a korábbi, ami bevált
+        const limitX = mapWidthPixels / 4;
         if (nextX > -limitX && nextX < window.innerWidth + limitX) {
             mapOffsetX = nextX;
         }
-        if (nextY > -limitY && nextY < window.innerHeight + limitY + 100) {
+
+        // Függőleges: Itt toljuk el a határokat!
+        // A 'topLimit' megakadályozza, hogy túl sok legyen a fekete fent
+        // A 'bottomLimit' extra helyet ad, hogy a víz és a sziget alja ne vágódjon le
+        const topLimit = -50; 
+        const bottomLimit = window.innerHeight - (mapHeightPixels / 2);
+
+        if (nextY > topLimit && nextY < bottomLimit + 400) {
             mapOffsetY = nextY;
         }
 

@@ -85,6 +85,7 @@ const fileNames = {
 };
 
 const MINING_TIME = 10000; // 10 másodperc
+let floatingIcons = [];
 
 Object.keys(fileNames).forEach(key => {
     images[key] = new Image();
@@ -365,7 +366,7 @@ function startProductionCycle() {
 
             // Ha bánya és van benne munkás
             if (obj.type === 'mine' && obj.workers > 0) {
-                await processMining(obj.workers);
+                 await processMining(obj.workers, obj.x, obj.y); // Itt küldjük el az x, y-t
             }
             
             // Itt később jöhet a hajó is:
@@ -375,7 +376,7 @@ function startProductionCycle() {
 }
 
 // Maga a bányászati logika
-async function processMining(workerCount) {
+async function processMining(workerCount, mineX, mineY) {
     // 70% Green Jade, 30% Purple Jade
     const isPurple = Math.random() < 0.3;
     const itemKey = isPurple ? 'purple_jade' : 'green_jade';
@@ -391,13 +392,55 @@ async function processMining(workerCount) {
     // Lekérjük a jelenlegi szintet és hozzáadjuk (vagy használhatod a Firebase increment függvényét is)
     const snap = await get(invRef);
     const current = snap.val() || 0;
-    
+    createFloatingIcon(mineX, mineY, itemKey);
     await set(invRef, current + amount);
 
     // Ha nyitva az inventory, frissítsük a látványt
     if (typeof refreshInventoryUI === "function" && 
         document.getElementById('inventory-window').style.display === 'flex') {
         refreshInventoryUI();
+    }
+}
+
+function createFloatingIcon(x, y, itemId) {
+    floatingIcons.push({
+        x: x * tileSize + tileSize / 2, // A bánya közepe
+        y: y * tileSize,
+        itemId: itemId,
+        opacity: 1,
+        life: 1.0 // 1.0-tól 0-ig csökken
+    });
+}
+
+function drawFloatingIcons() {
+    for (let i = floatingIcons.length - 1; i >= 0; i--) {
+        let icon = floatingIcons[i];
+        
+        // Mozgás felfelé
+        icon.y -= 1;
+        icon.opacity -= 0.02; // Elhalványulás
+        icon.life -= 0.02;
+
+        ctx.save();
+        ctx.globalAlpha = icon.opacity;
+        
+        // Az ikon kirajzolása (pl. green_jade képe)
+        const img = images[icon.itemId];
+        if (img) {
+            ctx.drawImage(img, icon.x - 10, icon.y - 20, 20, 20);
+        }
+        
+        // Egy kis "+1" szöveg az ikon mellé
+        ctx.fillStyle = "white";
+        ctx.font = "bold 14px Arial";
+        ctx.fillText("+1", icon.x + 12, icon.y - 5);
+        
+        ctx.restore();
+
+        // Ha elhalványult, töröljük a listából
+        if (icon.life <= 0) {
+            floatingIcons.splice(i, 1);
+        }
     }
 }
 
@@ -474,7 +517,22 @@ function drawMap() {
                     if (obj.type === 'tree') { scale = 1.3; yOffset = 40; } 
                     else if (obj.type === 'rock') { scale = 0.9; yOffset = 55; } 
                     else if (obj.type === 'house') { scale = 2.0; yOffset = 110; } 
-                    else if (obj.type === 'mine') { scale = 2.0; yOffset = 120; } 
+                    else if (obj.type === 'mine') { scale = 2.0; yOffset = 120; 
+                        let bounce = 0;
+                        if (obj.workers > 0) {
+                            // Ha van munkás, 0.5 másodpercenként "ugrik" egyet
+                            bounce = Math.abs(Math.sin(Date.now() / 200)) * 5; 
+                        }
+
+                        ctx.drawImage(
+                            images['mine'], 
+                            drawX, 
+                            drawY - bounce, // Itt ugrik meg felfelé
+                            tileSize, 
+                            tileSize + bounce // Kicsit "nyúlik" is
+                        );
+
+                    } 
                     else if (obj.type === 'boat') { scale = 2.0; yOffset = 100; }
 
                     // Minden méretet a zoomhoz igazítunk

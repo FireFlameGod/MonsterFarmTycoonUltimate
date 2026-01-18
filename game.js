@@ -76,7 +76,7 @@ const fileNames = {
     house: 'assets/house.png',
     boat: 'assets/boat.png',
     mine: 'assets/mine.png',
-    fish: 'icons/fish.png',
+    fish: 'icons/fish1.png',
     fish2: 'icons/fish2.png',
     fish3: 'icons/fish3.png',
     kraken: 'icons/kraken.png',

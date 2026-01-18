@@ -122,21 +122,24 @@ function drawTile(x, y, type) {
 // --- 3. INPUT ÉS KAMERA KORLÁTOK ---
 window.addEventListener('mousemove', (e) => {
     if (isDragging) {
-        let newX = mapOffsetX + (e.clientX - lastX);
-        let newY = mapOffsetY + (e.clientY - lastY);
-        const totalMapWidth = mapSize * tileW;
-        const totalMapHeight = mapSize * tileH;
-        // Kiszámoljuk a térkép széleit, hogy ne lehessen lehúzni a pályáról
-        // A 0,0 pont és a mapSize,mapSize pont vetületei alapján
-        const limitX = totalMapWidth / 2;
-        if (newX > window.innerWidth / 2 - limitX && newX < window.innerWidth / 2 + limitX) {
+        let deltaX = e.clientX - lastX;
+        let deltaY = e.clientY - lastY;
+        
+        let newX = mapOffsetX + deltaX;
+        let newY = mapOffsetY + deltaY;
+
+        // A térkép teljes méretei
+        const totalW = (mapSize * tileW) / 2;
+        const totalH = (mapSize * tileH);
+
+        // VÍZSZINTES (X) - Szimmetrikusan a képernyő közepéhez
+        if (newX > window.innerWidth / 2 - totalW && newX < window.innerWidth / 2 + totalW) {
             mapOffsetX = newX;
         }
 
-        // Függőleges korlát (Y): 
-        // A kezdőpont (150) környékén tartjuk, a térkép magasságától függően
-        const limitY = totalMapHeight / 2;
-        if (newY > -limitY + 200 && newY < limitY) {
+        // FÜGGŐLEGES (Y) - Kiterjesztett korlát lefelé
+        // Itt a titok: a 'totalH' értéket használjuk a lefelé mozgáshoz
+        if (newY > -totalH / 2 && newY < totalH / 1.5) {
             mapOffsetY = newY;
         }
 

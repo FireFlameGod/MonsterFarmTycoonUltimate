@@ -94,7 +94,10 @@ function drawTile(x, y, type) {
                 y - (visualOverlap / 2), 
                 tileW + visualOverlap, 
                 images.grass.height * (tileW / images.grass.width) + visualOverlap
+            
             );
+        }
+            
     } else {
         ctx.beginPath();
         ctx.moveTo(x, y);

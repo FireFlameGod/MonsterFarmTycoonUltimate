@@ -176,19 +176,19 @@ function drawMap() {
                         yOffset = 40;
                     } 
                     else if (obj.type === 'rock') {
-                        scale = 0.7;
+                        scale = 1.5;
                         yOffset = 45;
                     } 
                     else if (obj.type === 'house') {
-                        scale = 2.0;    // Itt növeld a ház méretét
+                        scale = 4.0;    // Itt növeld a ház méretét
                         yOffset = 50;   // Itt told lejjebb/feljebb
                     } 
                     else if (obj.type === 'mine') {
-                        scale = 1.8;    // Itt növeld a bánya méretét
+                        scale = 3.0;    // Itt növeld a bánya méretét
                         yOffset = 48;
                     } 
                     else if (obj.type === 'boat') {
-                        scale = 1.5;
+                        scale = 2.0;
                         yOffset = 25;   // A hajó kevesebb offsetet kap, hogy a vízben üljön
                     }
 

@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, set, get, child, update, increment, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-// --- FIREBASE CONFIG ---
+// --- FIREBASE CONFIG (MARAD A RÉGI) ---
 const firebaseConfig = {
     apiKey: "AIzaSyA-MauYrQl5WZ4TPv53vNxuUFnW3dEG0Z8",
     authDomain: "monsterfarmtycoonultimate.firebaseapp.com",
@@ -26,7 +26,21 @@ const tileH = 32;
 let mapOffsetX = window.innerWidth / 2; 
 let mapOffsetY = 150;
 
-// SZIGET TÉRKÉP (10x10)
+// KÉPEK BETÖLTÉSE
+// Létrehozunk egy objektumot a képeknek
+const images = {};
+const grassImg = new Image();
+grassImg.src = 'grass.png'; // Itt hivatkozunk a feltöltött képre!
+
+// Csak akkor rajzolunk újra, ha a kép betöltődött
+grassImg.onload = function() {
+    console.log("Fű textúra betöltve!");
+    drawMap();
+};
+images.grass = grassImg;
+
+
+// SZIGET TÉRKÉP (1 = Fű, 0 = Víz)
 const mapData = [
     [0,0,0,0,0,0,0,0,0,0],
     [0,0,1,1,1,1,1,1,0,0],
@@ -54,36 +68,51 @@ window.addEventListener('resize', resizeCanvas);
 
 function drawMap() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Optimalizálás: image smoothing kikapcsolása pixel artnál
+    ctx.imageSmoothingEnabled = false; 
+
     for (let y = 0; y < mapData.length; y++) {
         for (let x = 0; x < mapData[y].length; x++) {
             let screenX = (x - y) * (tileW / 2) + mapOffsetX;
             let screenY = (x + y) * (tileH / 2) + mapOffsetY;
+            
             drawTile(screenX, screenY, mapData[y][x]);
         }
     }
 }
 
 function drawTile(x, y, type) {
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + tileW / 2, y + tileH / 2);
-    ctx.lineTo(x, y + tileH);
-    ctx.lineTo(x - tileW / 2, y + tileH / 2);
-    ctx.closePath();
-
     if (type === 1) {
-        ctx.fillStyle = "#2ecc71"; 
-        ctx.fill();
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = "#27ae60"; 
-        ctx.stroke();
+        // FŰ (Kép rajzolása)
+        // A drawImage bal-fenti sarkot kér, de az x,y nálunk a tile csúcsa (közép-fent).
+        // Ezért eltoljuk balra a szélesség felével.
+        if (images.grass.complete) {
+            ctx.drawImage(images.grass, x - tileW / 2, y, tileW, tileH);
+        } else {
+            // Ha még nem töltött be a kép, rajzoljunk zöldet helyette
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + tileW / 2, y + tileH / 2);
+            ctx.lineTo(x, y + tileH);
+            ctx.lineTo(x - tileW / 2, y + tileH / 2);
+            ctx.fillStyle = "#2ecc71";
+            ctx.fill();
+        }
     } else {
+        // VÍZ (Marad rajzolva, vagy ide is tehetsz water.png-t később)
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + tileW / 2, y + tileH / 2);
+        ctx.lineTo(x, y + tileH);
+        ctx.lineTo(x - tileW / 2, y + tileH / 2);
+        ctx.closePath();
         ctx.fillStyle = "rgba(52, 152, 219, 0.3)";
         ctx.fill();
     }
 }
 
-// --- 2. INPUT KEZELÉS ---
+// --- 2. INPUT KEZELÉS (Marad a régi) ---
 canvas.addEventListener('mousedown', (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
 window.addEventListener('mousemove', (e) => {
     if (isDragging) {
@@ -106,8 +135,7 @@ canvas.addEventListener('touchmove', (e) => {
 }, {passive: false});
 canvas.addEventListener('touchend', () => isDragging = false);
 
-// --- 3. LOGIN & RENDSZER ---
-// Fontos: Globálissá tesszük a függvényeket, hogy a HTML gombok lássák őket!
+// --- 3. LOGIN & RENDSZER (Marad a régi) ---
 window.loginOrRegister = function() {
     const user = document.getElementById('username').value.trim();
     const pass = document.getElementById('password').value.trim();
@@ -133,7 +161,10 @@ function startGame(user) {
     document.getElementById('ui-layer').style.display = 'block';
     document.getElementById('player-name').innerText = user;
 
-    resizeCanvas(); drawMap();
+    resizeCanvas(); 
+    // A drawMap-et majd a kép betöltése is hívja, de biztos ami biztos:
+    drawMap();
+    
     onValue(ref(db, `users/${user}/money`), (snap) => {
         document.getElementById('money-display').innerText = snap.val();
     });

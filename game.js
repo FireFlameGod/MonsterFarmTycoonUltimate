@@ -24,17 +24,19 @@ const tileW = 128;
 const tileH = 64; 
 const mapSize = 30; 
 const visualOverlap = 20;
+
+// A TE KAMERA BEÁLLÍTÁSAID
 let mapOffsetX = window.innerWidth / 2; 
-let mapOffsetY = 150;
+let mapOffsetY = -500; 
 
 let mapData = [];
-let objectData = [];
+let objectData = {}; // OBJEKTUMKÉNT INDÍTJUK
+
 const rewards = {
-    tree: { coin: 15, xp: 10, health: 3 },  // Fa: 15 CC, 10 XP
-    rock: { coin: 30, xp: 25, health: 5 }   // Kő: 30 CC, 25 XP
+    tree: { coin: 15, xp: 10, health: 3 },
+    rock: { coin: 30, xp: 25, health: 5 }
 };
 
-let currentXP = 0; // XP változó
 // KÉPEK
 const images = {};
 const fileNames = {
@@ -52,60 +54,52 @@ Object.keys(fileNames).forEach(key => {
     images[key].onload = () => { if (currentPlayer) drawMap(); };
 });
 
-function createInitialIsland(userId) {
-    let newObjectData = {}; // Csak a tárgyakat mentjük (fák, kövek)
-    const islandSize = 14; 
-    const startPos = Math.floor((mapSize - islandSize) / 2);
-    const endPos = startPos + islandSize;
-
-    for (let y = startPos; y < endPos; y++) {
-        for (let x = startPos; x < endPos; x++) {
-            // Nem rakunk tárgyat a sziget szélére (homokra)
-            if (!(x === startPos || x === endPos - 1 || y === startPos || y === endPos - 1)) {
-                let rand = Math.random();
-                if (rand < 0.12) {
-                    newObjectData[`${y}_${x}`] = { type: 'tree', health: rewards.tree.health };
-                } else if (rand < 0.22) { 
-                    newObjectData[`${y}_${x}`] = { type: 'rock', health: rewards.rock.health };
-                }
-            }
-        }
-    }
-    // Feltöltjük a Firebase-be az új szigetet
-    set(ref(db, `islands/${userId}`), newObjectData);
-    return newObjectData;
-}
-
-// Ezt írd a generateMap helyére:
+// --- 1. PÁLYA ALAP GENERÁLÁSA (FŰ/VÍZ) ---
 function setupBaseTerrain() {
-    mapData = Array(mapSize).fill().map(() => Array(mapSize).fill(0));
+    mapData = Array(mapSize).fill().map(() => Array(mapSize).fill(0)); // 0 = Víz
     const islandSize = 14; 
     const startPos = Math.floor((mapSize - islandSize) / 2);
     const endPos = startPos + islandSize;
     
-    for (let y = startPos; y < endPos; y++) {
-        for (let x = startPos; x < endPos; x++) {
-            if (x === startPos || x === endPos - 1 || y === startPos || y === endPos - 1) {
-                mapData[y][x] = 3; // Homok a szélén
+    for (let y = 0; y < mapSize; y++) {
+        for (let x = 0; x < mapSize; x++) {
+            if (y >= startPos && y < endPos && x >= startPos && x < endPos) {
+                if (x === startPos || x === endPos - 1 || y === startPos || y === endPos - 1) {
+                    mapData[y][x] = 3; // Homok
+                } else {
+                    mapData[y][x] = (Math.random() < 0.15) ? 2 : 1; // Fű/Virág
+                }
             } else {
-                mapData[y][x] = (Math.random() < 0.15) ? 2 : 1; // Fű vagy Virág
+                mapData[y][x] = 0; // Minden más víz
             }
         }
     }
 }
 setupBaseTerrain();
 
-let isDragging = false;
-let startDragX, startDragY, lastX, lastY;
+// --- 2. ÚJ JÁTÉKOS SZIGET GENERÁLÁSA (FÁK/KÖVEK) ---
+function createInitialIsland(userId) {
+    let newObjects = {};
+    const islandSize = 14; 
+    const startPos = Math.floor((mapSize - islandSize) / 2);
+    const endPos = startPos + islandSize;
 
-// --- 2. JÁTÉKMOTOR ---
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    drawMap();
+    for (let y = startPos + 1; y < endPos - 1; y++) {
+        for (let x = startPos + 1; x < endPos - 1; x++) {
+            let rand = Math.random();
+            const key = `${y}_${x}`;
+            if (rand < 0.12) {
+                newObjects[key] = { type: 'tree', health: rewards.tree.health };
+            } else if (rand < 0.22) { 
+                newObjects[key] = { type: 'rock', health: rewards.rock.health };
+            }
+        }
+    }
+    set(ref(db, `islands/${userId}`), newObjects);
+    return newObjects;
 }
-window.addEventListener('resize', resizeCanvas);
 
+// --- 3. RAJZOLÁS ---
 function drawMap() {
     if (!ctx) return;
     ctx.fillStyle = "#000000"; 
@@ -121,23 +115,25 @@ function drawMap() {
                 screenY > -tileH && screenY < canvas.height + tileH) {
                 
                 drawTile(screenX, screenY, mapData[y][x]);
-                const key = `${y}_${x}`;          
-                let obj = objectData[y][x];
-                if (obj && images[obj.type].complete) {
+
+                // TÁRGYAK RAJZOLÁSA KULCS ALAPJÁN
+                const key = `${y}_${x}`;
+                let obj = objectData[key]; 
+                
+                if (obj && images[obj.type] && images[obj.type].complete) {
                     let img = images[obj.type];
                     let scale = (obj.type === 'tree') ? 1.0 : 0.7; 
                     let w = tileW * scale;
                     let h = (img.height * (w / img.width));
                     let yOffset = (obj.type === 'tree') ? 40 : 45; 
 
-                    let shakeX = 0;
                     if (obj.isShaking) {
-                        shakeX = Math.random() * 10 - 5;
                         ctx.globalAlpha = 0.6;
+                        ctx.drawImage(img, screenX - w/2 + (Math.random()*10-5), screenY - h + (tileH / 2) + yOffset, w, h);
+                        ctx.globalAlpha = 1.0;
+                    } else {
+                        ctx.drawImage(img, screenX - w/2, screenY - h + (tileH / 2) + yOffset, w, h);
                     }
-
-                    ctx.drawImage(img, screenX - w/2 + shakeX, screenY - h + (tileH / 2) + yOffset, w, h);
-                    ctx.globalAlpha = 1.0;
                 }
             }
         }
@@ -156,7 +152,10 @@ function drawTile(x, y, type) {
     }
 }
 
-// --- 3. INPUT (JAVÍTOTT KAMERA MOZGÁS) ---
+// --- 4. INPUTOK ---
+let isDragging = false;
+let startDragX, startDragY, lastX, lastY;
+
 canvas.addEventListener('mousedown', (e) => {
     isDragging = true;
     startDragX = e.clientX;
@@ -167,21 +166,14 @@ canvas.addEventListener('mousedown', (e) => {
 
 window.addEventListener('mousemove', (e) => {
     if (isDragging) {
-        let deltaX = e.clientX - lastX;
-        let deltaY = e.clientY - lastY;
-        
-        mapOffsetX += deltaX;
-        mapOffsetY += deltaY;
+        mapOffsetX += e.clientX - lastX;
+        mapOffsetY += e.clientY - lastY;
 
-       
-        // Vízszintes (Bal/Jobb)
-        if (mapOffsetX < 0) mapOffsetX = 0; // Ne menjen túl balra
-        if (mapOffsetX > window.innerWidth) mapOffsetX = window.innerWidth; // Ne menjen túl jobbra
-
-        // Függőleges (Fel/Le)
-        // A -200 és +800 közötti tartomány biztosítja, hogy lásd az alját is
-        if (mapOffsetY < -1000) mapOffsetY = -1000; // Felső korlát (kevesebb fekete fent)
-        if (mapOffsetY > 0) mapOffsetY = 0;  // Alsó korlát (több hely lefelé húzni)
+        // A TE KÉRT KORLÁTAID
+        if (mapOffsetX < 0) mapOffsetX = 0;
+        if (mapOffsetX > window.innerWidth) mapOffsetX = window.innerWidth;
+        if (mapOffsetY < -1000) mapOffsetY = -1000;
+        if (mapOffsetY > 0) mapOffsetY = 0;
 
         lastX = e.clientX; 
         lastY = e.clientY;
@@ -203,37 +195,34 @@ function handleMapClick(mouseX, mouseY) {
     let tx = Math.floor((my / (tileH / 2) + mx / (tileW / 2)) / 2);
     let ty = Math.floor((my / (tileH / 2) - mx / (tileW / 2)) / 2);
 
-    if (tx >= 0 && tx < mapSize && ty >= 0 && ty < mapSize) {
-        const key = `${ty}_${tx}`;
-        let target = objectData[ty][tx];
-        if (target) {
-            target.health--;
-            target.isShaking = true;
-            drawMap();
-            
-            setTimeout(() => {
-                if (objectData[ty] && objectData[ty][tx]) {
-                    objectData[ty][tx].isShaking = false;
-                    drawMap();
-                }
-            }, 100);
-
-            if (target.health <= 0) {
-                const reward = rewards[target.type];
-                update(ref(db, `users/${currentPlayer}`), {
-                    coin: increment(reward.coin), // Commerce Coin hozzáadása
-                    xp: increment(reward.xp)      // XP hozzáadása
-                });
-                
-                set(ref(db, `islands/${currentPlayer}/${key}`), null);
-                delete objectData[key];
+    const key = `${ty}_${tx}`;
+    if (objectData[key]) {
+        let target = objectData[key];
+        target.health--;
+        target.isShaking = true;
+        drawMap();
+        
+        setTimeout(() => {
+            if (objectData[key]) {
+                objectData[key].isShaking = false;
+                drawMap();
             }
-            drawMap();
+        }, 100);
+
+        if (target.health <= 0) {
+            const reward = rewards[target.type];
+            update(ref(db, `users/${currentPlayer}`), {
+                coin: increment(reward.coin),
+                xp: increment(reward.xp)
+            });
+            set(ref(db, `islands/${currentPlayer}/${key}`), null);
+            delete objectData[key];
         }
+        drawMap();
     }
 }
 
-// --- 4. RENDSZER ---
+// --- 5. RENDSZER ---
 window.loginOrRegister = function() {
     const user = document.getElementById('username').value.trim();
     const pass = document.getElementById('password').value.trim();
@@ -244,7 +233,7 @@ window.loginOrRegister = function() {
             if (snapshot.val().password === pass) startGame(user);
             else document.getElementById('error-msg').style.display = 'block';
         } else {
-            set(ref(db, 'users/' + user), { username: user, password: pass, money: 100, wood: 0, stone: 0 }).then(() => startGame(user));
+            set(ref(db, 'users/' + user), { username: user, password: pass, coin: 100, xp: 0 }).then(() => startGame(user));
         }
     });
 };
@@ -255,30 +244,19 @@ function startGame(user) {
     localStorage.setItem('mf_pass', document.getElementById('password').value);
     
     document.getElementById('login-screen').style.display = 'none';
-    const ui = document.getElementById('ui-layer');
-    ui.style.display = 'flex'; 
-    
+    document.getElementById('ui-layer').style.display = 'flex'; 
     document.getElementById('player-name').innerText = user;
 
-    // Kezdő középpont beállítása
-    mapOffsetX = window.innerWidth / 2;
-    mapOffsetY = -500;
-
-
-    // 1. Sziget betöltése vagy létrehozása
+    // Sziget betöltése
     onValue(ref(db, `islands/${user}`), (snapshot) => {
-        if (snapshot.exists()) {
-            objectData = snapshot.val(); 
-        } else {
-            objectData = createInitialIsland(user); 
-        }
-        // Biztonsági mentés: ha valamiért mégis null lenne
-        if (!objectData) objectData = {}; 
+        objectData = snapshot.exists() ? snapshot.val() : createInitialIsland(user);
+        if (!objectData) objectData = {};
         drawMap();
     });
 
+    // Erőforrások betöltése
     onValue(ref(db, `users/${user}`), (snap) => {
-    const data = snap.val();
+        const data = snap.val();
         if (data) {
             document.getElementById('money-display').innerText = data.coin || 0;
             document.getElementById('xp-display').innerText = data.xp || 0;
@@ -301,3 +279,10 @@ window.logout = function() {
     localStorage.clear();
     location.reload();
 };
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    drawMap();
+}
+window.addEventListener('resize', resizeCanvas);

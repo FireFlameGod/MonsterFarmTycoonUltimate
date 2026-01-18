@@ -106,6 +106,7 @@ window.buyItem = function(type, price) {
         if (myCoins >= price) {
             isBuilding = { type: type, price: price };
             window.toggleShop();
+            document.getElementById('game-canvas').style.cursor = 'crosshair';
             alert("Válaszd ki a helyet a szigeten!");
         } else {
             alert("Nincs elég Commerce Coinod!");
@@ -410,6 +411,17 @@ function handleMapClick(mouseX, mouseY) {
 
         if (allowed && !objectData[key]) {
             update(ref(db, `users/${currentPlayer}`), { coin: increment(-isBuilding.price) });
+
+            // --- ÚJ ADATSZERKEZET MENTÉSE ---
+            const buildingData = { 
+                type: isBuilding.type, 
+                lvl: 1,               // Kezdő szint
+                workers: 0,           // Alapból nincs benne senki
+                // A ház nem fogad munkást (ő ad slotot), a bánya/hajó igen
+                maxWorkers: (isBuilding.type === 'house') ? 0 : 1,
+                health: 999 
+            };
+
             set(ref(db, `islands/${currentPlayer}/${key}`), { type: isBuilding.type, health: 999 });
             isBuilding = null;
         } else {

@@ -29,8 +29,18 @@ const visualOverlap = 20
 // KÉPEK BETÖLTÉSE
 // Létrehozunk egy objektumot a képeknek
 const images = {};
-const grassImg = new Image();
-grassImg.src = 'grass.png'; // Itt hivatkozunk a feltöltött képre!
+const fileNames = {
+    grass: 'grass.png',
+    flower: 'grass_flower.png',
+    sand: 'sand.png',
+    water: 'water.png'
+};
+
+Object.keys(fileNames).forEach(key => {
+    images[key] = new Image();
+    images[key].src = fileNames[key];
+    images[key].onload = () => { if (currentPlayer) drawMap(); };
+});
 
 // Csak akkor rajzolunk újra, ha a kép betöltődött
 grassImg.onload = function() {
@@ -43,14 +53,14 @@ images.grass = grassImg;
 // SZIGET TÉRKÉP (1 = Fű, 0 = Víz)
 const mapData = [
     [0,0,0,0,0,0,0,0,0,0],
-    [0,0,1,1,1,1,1,1,0,0],
-    [0,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,1,1,0],
-    [0,1,1,1,1,1,1,1,1,0],
-    [0,0,1,1,1,1,1,1,0,0],
+    [0,0,3,3,3,3,3,3,0,0], // Part
+    [0,3,1,1,2,1,1,1,3,0], // Fű és virág bent
+    [0,3,1,2,1,1,2,1,3,0],
+    [0,3,1,1,1,1,1,1,3,0],
+    [0,3,2,1,1,2,1,2,3,0],
+    [0,3,1,1,1,1,1,1,3,0],
+    [0,3,1,1,2,1,1,1,3,0],
+    [0,0,3,3,3,3,3,3,0,0],
     [0,0,0,0,0,0,0,0,0,0]
 ];
 
@@ -83,36 +93,33 @@ function drawMap() {
 }
 
 function drawTile(x, y, type) {
-    if (type === 1) {
-        // --- FŰ ---
-        if (images.grass.complete) {
-            // Kép kirajzolása (ha már betöltött)
-            ctx.drawImage(
-                images.grass, 
-                x - (tileW / 2) - (visualOverlap / 2), 
-                y - (visualOverlap / 2), 
-                tileW + visualOverlap, 
-                images.grass.height * (tileW / images.grass.width) + visualOverlap
-            );
-        } else {
-            // Ha még tölt a kép, rajzoljunk egy zöld alapot, hogy ne legyen lyukas a sziget
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo(x + tileW / 2, y + tileH / 2);
-            ctx.lineTo(x, y + tileH);
-            ctx.lineTo(x - tileW / 2, y + tileH / 2);
-            ctx.fillStyle = "#2ecc71";
-            ctx.fill();
-        }
+    let img = null;
+    
+    // Meghatározzuk melyik kép kell a szám alapján
+    if (type === 0) img = images.water;
+    else if (type === 1) img = images.grass;
+    else if (type === 2) img = images.flower;
+    else if (type === 3) img = images.sand;
+
+    if (img && img.complete) {
+        // Kiszámoljuk a magasságot, hogy ne torzuljon a kép
+        let drawHeight = img.height * (tileW / img.width);
+        
+        ctx.drawImage(
+            img, 
+            Math.floor(x - (tileW / 2) - (visualOverlap / 2)), 
+            Math.floor(y - (visualOverlap / 2)), 
+            tileW + visualOverlap, 
+            drawHeight + visualOverlap
+        );
     } else {
-        // --- VÍZ ---
+        // Tartalék rajzolás (ha még tölt a kép)
         ctx.beginPath();
         ctx.moveTo(x, y);
         ctx.lineTo(x + tileW / 2, y + tileH / 2);
         ctx.lineTo(x, y + tileH);
         ctx.lineTo(x - tileW / 2, y + tileH / 2);
-        ctx.closePath();
-        ctx.fillStyle = "rgba(52, 152, 219, 0.2)";
+        ctx.fillStyle = type === 0 ? "#3498db" : (type === 3 ? "#f1c40f" : "#2ecc71");
         ctx.fill();
     }
 }

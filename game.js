@@ -264,7 +264,7 @@ function handleMapClick(mouseX, mouseY) {
     }   
 }
 
-if (objectData[key]) {
+if (objectData[key]){
     let target = objectData[key];
     target.health--;function handleMapClick(mouseX, mouseY) {
     let mx = mouseX - mapOffsetX;
@@ -311,7 +311,7 @@ if (objectData[key]) {
             return;
         }
     }
-
+    }
     // --- INTERAKCIÓ (Vágás/Ütés) ---
     if (objectData && objectData[key]) {
         let target = objectData[key];

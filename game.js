@@ -553,7 +553,7 @@ function drawMap() {
                             bounce = Math.max(0, anim) * (8 * gameZoom);
                             
                             // Rugalmasság: -10 és +10 pixel között változik a zoom függvényében
-                            let strength = 10 * gameZoom;
+                            let strength = 20 * gameZoom;
                             squashW = -anim * strength; 
                             squashH = anim * strength;
                         }

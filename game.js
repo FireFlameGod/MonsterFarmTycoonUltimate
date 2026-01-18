@@ -29,7 +29,12 @@ let mapOffsetY = 150;
 
 let mapData = [];
 let objectData = [];
+const rewards = {
+    tree: { coin: 15, xp: 10, health: 3 },  // Fa: 15 CC, 10 XP
+    rock: { coin: 30, xp: 25, health: 5 }   // Kő: 30 CC, 25 XP
+};
 
+let currentXP = 0; // XP változó
 // KÉPEK
 const images = {};
 const fileNames = {
@@ -46,6 +51,32 @@ Object.keys(fileNames).forEach(key => {
     images[key].src = fileNames[key];
     images[key].onload = () => { if (currentPlayer) drawMap(); };
 });
+
+function createInitialIsland(userId) {
+    let newObjectData = {}; // Csak a tárgyakat mentjük (fák, kövek)
+    const islandSize = 14; 
+    const startPos = Math.floor((mapSize - islandSize) / 2);
+    const endPos = startPos + islandSize;
+
+    for (let y = startPos; y < endPos; y++) {
+        for (let x = startPos; x < endPos; x++) {
+            // Nem rakunk tárgyat a sziget szélére (homokra)
+            if (!(x === startPos || x === endPos - 1 || y === startPos || y === endPos - 1)) {
+                let rand = Math.random();
+                if (rand < 0.12) {
+                    newObjectData[`${y}_${x}`] = { type: 'tree', health: rewards.tree.health };
+                } else if (rand < 0.22) { 
+                    newObjectData[`${y}_${x}`] = { type: 'rock', health: rewards.rock.health };
+                }
+            }
+        }
+    }
+    // Feltöltjük a Firebase-be az új szigetet
+    set(ref(db, `islands/${userId}`), newObjectData);
+    return newObjectData;
+}
+
+
 
 // --- 1. GENERÁLÁS ---
 function generateMap() {
@@ -197,13 +228,14 @@ function handleMapClick(mouseX, mouseY) {
             }, 100);
 
             if (target.health <= 0) {
-                let isTree = (target.type === 'tree');
+                const reward = rewards[target.type];
                 update(ref(db, `users/${currentPlayer}`), {
-                    money: increment(isTree ? 10 : 20),
-                    wood: increment(isTree ? 5 : 0),
-                    stone: increment(isTree ? 0 : 3)
+                    coin: increment(reward.coin), // Commerce Coin hozzáadása
+                    xp: increment(reward.xp)      // XP hozzáadása
                 });
-                objectData[ty][tx] = null;
+                
+                set(ref(db, `islands/${currentPlayer}/${key}`), null);
+                delete objectData[key];
             }
             drawMap();
         }
@@ -241,15 +273,26 @@ function startGame(user) {
     mapOffsetX = window.innerWidth / 2;
     mapOffsetY = -500;
 
-    resizeCanvas(); 
+
+    // 1. Sziget betöltése vagy létrehozása
+    onValue(ref(db, `islands/${user}`), (snapshot) => {
+        if (snapshot.exists()) {
+            objectData = snapshot.val(); // Betöltjük a mentett fát/követ
+        } else {
+            objectData = createInitialIsland(user); // Új játékosnak generálunk
+        }
+        drawMap();
+    });
+
     onValue(ref(db, `users/${user}`), (snap) => {
-        const data = snap.val();
+    const data = snap.val();
         if (data) {
-            document.getElementById('money-display').innerText = data.money || 0;
-            document.getElementById('wood-display').innerText = data.wood || 0;
-            document.getElementById('stone-display').innerText = data.stone || 0;
+            document.getElementById('money-display').innerText = data.coin || 0;
+            document.getElementById('xp-display').innerText = data.xp || 0;
         }
     });
+
+    resizeCanvas(); 
 }
 
 window.onload = function() {

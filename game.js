@@ -113,7 +113,7 @@ function drawMap() {
                     let w = tileW * scale; // Most már létezik a 'w' mielőtt a 'h'-hoz használnánk!
                     let h = (img.height * (w / img.width));
                     
-                    let yOffset = (obj.type === 'tree') ? 40 : 40; 
+                    let yOffset = (obj.type === 'tree') ? 40 : 45; 
 
                     ctx.drawImage(img, screenX - w/2, screenY - h + (tileH / 2) + yOffset, w, h);
                 }

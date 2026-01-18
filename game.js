@@ -321,6 +321,9 @@ async function startGame(user) {
     document.getElementById('ui-layer').style.display = 'flex'; 
     document.getElementById('player-name').innerText = user;
     const cheatBtn = document.getElementById('admin-cheat-btn');
+    if (cheatBtn) {
+        cheatBtn.style.display = 'block'; // Vagy 'inline-block'
+    }
 
     try {
         const userSnap = await get(ref(db, `users/${user}`));

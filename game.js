@@ -233,7 +233,14 @@ window.loginOrRegister = function() {
             if (snapshot.val().password === pass) startGame(user);
             else document.getElementById('error-msg').style.display = 'block';
         } else {
-            set(ref(db, 'users/' + user), { username: user, password: pass, coin: 100, xp: 0 }).then(() => startGame(user));
+            // ÚJ JÁTÉKOS: Itt jelöljük meg, hogy MÉG NINCS inicializálva
+            set(ref(db, 'users/' + user), { 
+                username: user, 
+                password: pass, 
+                coin: 100, 
+                xp: 0,
+                hasIsland: false // Ez a kulcs fogja megvédeni a szigetet
+            }).then(() => startGame(user));
         }
     });
 };
@@ -248,20 +255,23 @@ function startGame(user) {
     document.getElementById('player-name').innerText = user;
 
 
-    get(ref(db, `islands/${user}`)).then((snapshot) => {
-        if (!snapshot.exists()) {
-            // CSAK AKKOR generálunk, ha az adatbázisban MÉG SOHA nem létezett ez az ág
-            console.log("Új játékos, sziget generálása...");
+    // EGYSZERI ELLENŐRZÉS: Kell-e generálni?
+    get(ref(db, `users/${user}`)).then((snap) => {
+        const userData = snap.val();
+        if (userData && userData.hasIsland === false) {
+            console.log("Első belépés, sziget létrehozása...");
             objectData = createInitialIsland(user);
+            // Miután generáltunk, átállítjuk TRUE-ra, így többet nem fog
+            update(ref(db, `users/${user}`), { hasIsland: true });
         }
     });
 
-    // Sziget betöltése
+    // FOLYAMATOS FIGYELÉS: Sziget tárgyai
     onValue(ref(db, `islands/${user}`), (snapshot) => {
         if (snapshot.exists()) {
             objectData = snapshot.val();
         } else {
-            // Ha létezik a játékos, de üres a sziget, ne generáljon újat!
+            // Ha az adatbázis üres, de a hasIsland true, akkor ez egy üres sziget!
             objectData = {}; 
         }
         drawMap();

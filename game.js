@@ -468,84 +468,74 @@ function handleDrag(dx, dy) {
 function handleMapClick(mouseX, mouseY) {
     if (!currentPlayer || !mapData) return;
 
-    try {
-        // 1. Zoom és Offset korrekció - Biztosítjuk, hogy számokat kapjunk
-        const mx = (mouseX - mapOffsetX) / gameZoom;
-        const my = (mouseY - mapOffsetY) / gameZoom;
-        
-        // 2. Izometrikus koordináta számítás
-        const tx = Math.floor((my / (tileH / 2) + mx / (tileW / 2)) / 2);
-        const ty = Math.floor((my / (tileH / 2) - mx / (tileW / 2)) / 2);
+    // 1. Koordináták kiszámítása (Zoom figyelembevételével)
+    let mx = (mouseX - mapOffsetX) / gameZoom;
+    let my = (mouseY - mapOffsetY) / gameZoom;
+    let tx = Math.floor((my / (tileH / 2) + mx / (tileW / 2)) / 2);
+    let ty = Math.floor((my / (tileH / 2) - mx / (tileW / 2)) / 2);
 
-        // 3. HATÁRELLENŐRZÉS: Ha a térképen kívülre kattintasz, ne csináljon semmit
-        if (ty < 0 || ty >= mapSize || tx < 0 || tx >= mapSize || isNaN(tx) || isNaN(ty)) {
-            console.log("Kattintás a térképen kívül:", ty, tx);
-            return;
+    // 2. Biztonsági ellenőrzés: ha a térképen kívülre kattintasz
+    if (ty < 0 || ty >= mapSize || tx < 0 || tx >= mapSize) return;
+
+    const key = `${ty}_${tx}`;
+
+    // 3. Építés mód
+    if (isBuilding) {
+        const tileType = mapData[ty][tx];
+        let allowed = (isBuilding.type === 'boat' && tileType === 0) || 
+                      ((isBuilding.type === 'house' || isBuilding.type === 'mine') && tileType >= 1);
+
+        if (allowed && !objectData[key]) {
+            update(ref(db, `users/${currentPlayer}`), { coin: increment(-isBuilding.price) });
+            set(ref(db, `islands/${currentPlayer}/${key}`), { 
+                type: isBuilding.type, 
+                lvl: 1, 
+                workers: 0, 
+                maxWorkers: (isBuilding.type === 'house') ? 0 : 1,
+                health: 999 
+            });
+            isBuilding = null;
+        } else {
+            alert("Ide nem építhetsz!");
+            isBuilding = null;
         }
-
-        const key = `${ty}_${tx}`;
-
-        // 4. Építés kezelése
-        if (isBuilding) {
-            if (mapData[ty] && mapData[ty][tx] !== undefined) {
-                const tileType = mapData[ty][tx];
-                let allowed = (isBuilding.type === 'boat' && tileType === 0) || 
-                              ((isBuilding.type === 'house' || isBuilding.type === 'mine') && tileType >= 1);
-
-                if (allowed && !objectData[key]) {
-                    update(ref(db, `users/${currentPlayer}`), { coin: increment(-isBuilding.price) });
-                    const buildingData = { 
-                        type: isBuilding.type, 
-                        lvl: 1, 
-                        workers: 0, 
-                        maxWorkers: (isBuilding.type === 'house') ? 0 : 1,
-                        health: 999 
-                    };
-                    set(ref(db, `islands/${currentPlayer}/${key}`), buildingData);
-                    isBuilding = null;
-                    document.getElementById('game-canvas').style.cursor = 'default';
-                } else {
-                    alert("Ide nem építhetsz!");
-                    isBuilding = null;
-                }
-            }
-        } 
-        // 5. Interakció (fa, kő) kezelése
-        else if (objectData && objectData[key]) {
-            let target = objectData[key];
-            if (target.type === 'tree' || target.type === 'rock') {
-                target.health--;
-                target.isShaking = true;
-                
-                // Azonnali újrarajzolás a rázkódás miatt
-                drawMap();
-                
-                setTimeout(() => { 
-                    if (objectData && objectData[key]) {
-                        objectData[key].isShaking = false;
-                        drawMap();
-                    }
-                }, 100);
-                
-                if (target.health <= 0) {
-                    const r = rewards[target.type];
-                    update(ref(db, `users/${currentPlayer}`), { 
-                        coin: increment(r.coin), 
-                        xp: increment(r.xp) 
-                    });
-                    set(ref(db, `islands/${currentPlayer}/${key}`), null);
-                }
-            }
-        }
-
-        // 6. Mindenképpen rajzoljuk újra a mapot a végén!
         drawMap();
-
-    } catch (error) {
-        console.error("Hiba a kattintás kezelésekor:", error);
-        // Ha hiba történik, kényszerítsük az újrarajzolást, hogy ne maradjon fekete
-        drawMap();
+        return;
     }
+
+    // 4. Interakció (Fa, Kő ütése)
+    if (objectData && objectData[key]) {
+        let target = objectData[key];
+        
+        // CSAK akkor csinálunk valamit, ha ez fa vagy kő!
+        if (target.type === 'tree' || target.type === 'rock') {
+            target.health--;
+            target.isShaking = true;
+            
+            drawMap();
+            setTimeout(() => { 
+                if (objectData[key]) {
+                    objectData[key].isShaking = false;
+                    drawMap();
+                }
+            }, 100);
+            
+            if (target.health <= 0) {
+                const r = rewards[target.type];
+                // Biztonsági ellenőrzés, hogy létezik-e a jutalom
+                if (r) {
+                    update(ref(db, `users/${currentPlayer}`), { 
+                        coin: increment(r.coin || 0), 
+                        xp: increment(r.xp || 0) 
+                    });
+                }
+                set(ref(db, `islands/${currentPlayer}/${key}`), null);
+            }
+        }
+    }
+    
+    // Mindig rajzoljuk újra, hogy ne ragadjon be a kép
+    drawMap();
 }
 
 window.loginOrRegister = function() {

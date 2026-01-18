@@ -547,7 +547,7 @@ function drawMap() {
                         yOffset = 120; 
                         if (obj.workers > 0) {
                             // Egy közös animációs alap (sinus hullám)
-                            let anim = Math.sin(Date.now() / 150); 
+                            let anim = Math.sin(Date.now() / 250); 
                             
                             // Ugrás: csak a hullám pozitív részében ugrik fel
                             bounce = Math.max(0, anim) * (5 * gameZoom);

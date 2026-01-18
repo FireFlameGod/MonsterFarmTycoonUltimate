@@ -485,71 +485,64 @@ function drawMap() {
     ctx.fillStyle = "#000000"; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Kiszámoljuk a zoomolt méreteket, hogy ne a loopon belül szorozgassunk
     const zW = tileW * gameZoom;
     const zH = tileH * gameZoom;
     const zOverlap = visualOverlap * gameZoom;
 
     for (let y = 0; y < mapSize; y++) {
         for (let x = 0; x < mapSize; x++) {
-            // Itt a fix: a koordinátákat is a zoomolt mérethez igazítjuk
             let screenX = (x - y) * (zW / 2) + mapOffsetX;
             let screenY = (x + y) * (zH / 2) + mapOffsetY;
             
-            // Csak akkor rajzolunk, ha látjuk (levágás)
             if (screenX > -zW && screenX < canvas.width + zW && 
                 screenY > -zH && screenY < canvas.height + zH) {
                 
-                // 1. Talaj rajzolása
                 drawTile(screenX, screenY, mapData[y][x], zW, zH, zOverlap);
 
-                // 2. Objektumok rajzolása
                 const key = `${y}_${x}`;
                 let obj = objectData[key]; 
                 
                 if (obj && images[obj.type] && images[obj.type].complete) {
                     let img = images[obj.type];
-
-                    // Alapméretek és eltolások (a te eredeti értékeid szorozva a zoommal)
                     let scale = 1.0;
                     let yOffset = 40;
+                    let bounce = 0;
 
+                    // Beállítások típusonként
                     if (obj.type === 'tree') { scale = 1.3; yOffset = 40; } 
                     else if (obj.type === 'rock') { scale = 0.9; yOffset = 55; } 
                     else if (obj.type === 'house') { scale = 2.0; yOffset = 110; } 
-                    else if (obj.type === 'mine') { scale = 2.0; yOffset = 120; 
-                        let bounce = 0;
+                    else if (obj.type === 'mine') { 
+                        scale = 2.0; 
+                        yOffset = 120; 
                         if (obj.workers > 0) {
-                            // Ha van munkás, 0.5 másodpercenként "ugrik" egyet
-                            bounce = Math.abs(Math.sin(Date.now() / 200)) * 5; 
+                            // Szinuszos ugrálás
+                            bounce = Math.abs(Math.sin(Date.now() / 200)) * (5 * gameZoom); 
                         }
-
-                        ctx.drawImage(
-                            images['mine'], 
-                            drawX, 
-                            drawY - bounce, // Itt ugrik meg felfelé
-                            tileSize, 
-                            tileSize + bounce // Kicsit "nyúlik" is
-                        );
-
                     } 
                     else if (obj.type === 'boat') { scale = 2.0; yOffset = 100; }
 
-                    // Minden méretet a zoomhoz igazítunk
                     let w = zW * scale;
                     let h = (img.height * (w / img.width));
                     let finalYOffset = yOffset * gameZoom;
 
+                    // Rajzolás (itt korrigáltuk a bounce-t és a változóneveket)
                     if (obj.isShaking) {
                         ctx.globalAlpha = 0.6;
-                        ctx.drawImage(img, screenX - w/2 + (Math.random()*4-2), screenY - h + (zH / 2) + finalYOffset, w, h);
+                        ctx.drawImage(img, screenX - w/2 + (Math.random()*4-2), (screenY - h + (zH / 2) + finalYOffset) - bounce, w, h + bounce);
                         ctx.globalAlpha = 1.0;
                     } else {
-                        ctx.drawImage(img, screenX - w/2, screenY - h + (zH / 2) + finalYOffset, w, h);
+                        // A bounce kivonódik az Y pozícióból (felfelé ugrik), és hozzáadódik a magassághoz (nyúlik)
+                        ctx.drawImage(img, screenX - w/2, (screenY - h + (zH / 2) + finalYOffset) - bounce, w, h + bounce);
                     }
                 }
             }
         }
+    }
+
+    // LEBEGŐ IKONOK RAJZOLÁSA (A ciklus után, hogy minden felett legyen)
+    if (typeof drawFloatingIcons === "function") {
+        drawFloatingIcons();
     }
 }
 

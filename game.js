@@ -19,7 +19,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-
+const auth = getAuth(app); // <--- EZT ADD HOZZÁ!
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 let currentPlayer = null;

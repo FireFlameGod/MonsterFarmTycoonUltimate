@@ -104,21 +104,17 @@ let gameStarted = false;
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentPlayer = user.uid;
+        document.getElementById('login-screen').style.display = 'none';
         
-        // 1. Elrejtjük a bejelentkező felületet
-        const loginScreen = document.getElementById('login-screen');
-        if (loginScreen) loginScreen.style.display = 'none';
-
-        // 2. Csak egyszer indítjuk el a játékot
         if (!gameStarted) {
             gameStarted = true;
-            startGame(); 
+            startGame(user.uid); // Az UID-t adjuk át
         }
     } else {
-        // 3. Ha nincs belépve (vagy kilépett), mutassuk a login-t
-        const loginScreen = document.getElementById('login-screen');
-        if (loginScreen) loginScreen.style.display = 'flex'; // vagy 'block'
+        document.getElementById('login-screen').style.display = 'flex';
+        if (document.getElementById('ui-layer')) document.getElementById('ui-layer').style.display = 'none';
         gameStarted = false;
+        currentPlayer = null;
     }
 });
 
@@ -798,7 +794,7 @@ function handleMapClick(mouseX, mouseY) {
                 health: 999 
             };
 
-            set(ref(db, `islands/${currentPlayer}/${key}`), { type: isBuilding.type, health: 999 });
+            set(ref(db, `islands/${currentPlayer}/${key}`), buildingData);
             isBuilding = null;
             canvas.style.cursor = 'default';
         } else {
@@ -884,101 +880,88 @@ window.loginOrRegister = async function() {
     }
 };
 
-async function startGame(user) {
-    currentPlayer = user;
-    localStorage.setItem('mf_user', user);
-    localStorage.setItem('mf_pass', document.getElementById('password').value);
+async function startGame(userId) {
+    currentPlayer = userId;
     
-    // UI MEGJELENÍTÉSE
+    // UI rétegek kezelése
     document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('ui-layer').style.display = 'flex'; 
-    
-    // Oldalsó menü (Bolt, Kilépés) megjelenítése
+    const uiLayer = document.getElementById('ui-layer');
+    if (uiLayer) uiLayer.style.display = 'flex'; 
     const sideMenu = document.getElementById('side-menu-layer');
     if (sideMenu) sideMenu.style.display = 'flex';
 
-    document.getElementById('player-name').innerText = user;
-
-    // KAMERA IGAZÍTÁSA
-    if (isMobile) {
-        mapOffsetX = window.innerWidth / 2;
-        mapOffsetY = 100;
-    } else {
-        mapOffsetX = 500;
-        mapOffsetY = -300;
-    }
-
-    const cheatBtn = document.getElementById('admin-cheat-btn');
-    if (cheatBtn) cheatBtn.style.display = 'block';
-
     try {
-        const userSnap = await get(ref(db, `users/${user}`));
-        if (!userSnap.val().hasIsland) {
-            objectData = createInitialIsland(user);
-            await update(ref(db, `users/${user}`), { hasIsland: true });
+        const userRef = ref(db, `users/${userId}`);
+        const userSnap = await get(userRef);
+        let userDataDb = userSnap.val();
+
+        // Ha nincs még adatbázis bejegyzés, létrehozzuk
+        if (!userDataDb) {
+            const chosenName = document.getElementById('username').value.trim() || "Új Gazda";
+            userDataDb = {
+                username: chosenName,
+                coin: 1000,
+                xp: 0,
+                hasIsland: false,
+                lastActive: Date.now()
+            };
+            await set(userRef, userDataDb);
         }
 
-        // --- SZIGET FIGYELŐ ---
-        onValue(ref(db, `islands/${user}`), (snap) => {
-            objectData = snap.exists() ? snap.val() : {};
-            
-            const hasHouse = Object.values(objectData).some(o => o.type === 'house');
-            const npcBtn = document.getElementById('npc-manage-btn');
-            if (npcBtn) {
-                npcBtn.style.display = hasHouse ? 'flex' : 'none';
-            }
+        // Név megjelenítése (Ellenőrizd, hogy a HTML-ben 'player-name' az ID!)
+        const nameDisplay = document.getElementById('player-name');
+        if (nameDisplay) nameDisplay.innerText = userDataDb.username;
 
+        // Kezdő sziget generálása, ha nincs
+        if (!userDataDb.hasIsland) {
+            console.log("Sziget generálása...");
+            objectData = createInitialIsland(userId);
+            await update(userRef, { hasIsland: true });
+        }
+
+        // Adatbázis figyelők (Realtime)
+        onValue(ref(db, `islands/${userId}`), (snap) => {
+            objectData = snap.exists() ? snap.val() : {};
             updateShopAvailability(objectData);
             drawMap();
         });
 
-        // --- FELHASZNÁLÓ FIGYELŐ (XP CSÍK ÉS PÉNZ) ---
-        onValue(ref(db, `users/${user}`), (snap) => {
+        onValue(userRef, (snap) => {
             const d = snap.val();
             if (d) {
-                const xp = d.xp || 0;
-                const currentLevel = calculateLevel(xp);
+                // Pénz és XP frissítés a képernyőn
+                if(document.getElementById('money-display')) 
+                    document.getElementById('money-display').innerText = Math.floor(d.coin || 0);
+                
+                const currentLevel = calculateLevel(d.xp || 0);
+                if(document.getElementById('level-display')) 
+                    document.getElementById('level-display').innerText = currentLevel;
 
-                // Matek a progress barhoz (szükség van a getTotalXpForLevel függvényre!)
+                // XP csík matek
                 const minXpForCurrent = getTotalXpForLevel(currentLevel);
                 const minXpForNext = getTotalXpForLevel(currentLevel + 1);
+                const progress = ((d.xp - minXpForCurrent) / (minXpForNext - minXpForCurrent)) * 100;
                 
-                const xpGainedInLevel = xp - minXpForCurrent;
-                const xpNeededForLevel = minXpForNext - minXpForCurrent;
-                const progress = Math.min(100, (xpGainedInLevel / xpNeededForLevel) * 100);
+                const xpBar = document.getElementById('xp-progress');
+                if (xpBar) xpBar.style.width = Math.min(100, progress) + "%";
 
-                // UI Frissítés
-                document.getElementById('money-display').innerText = Math.floor(d.coin || 0);
-                document.getElementById('level-display').innerText = currentLevel;
-                
-                const xpProgress = document.getElementById('xp-progress');
-                if (xpProgress) xpProgress.style.width = progress + "%";
-                
-                const xpText = document.getElementById('xp-text');
-                if (xpText) xpText.innerText = `${Math.floor(xpGainedInLevel)} / ${Math.floor(xpNeededForLevel)} XP`;
-
-                if (lastLevel !== null && currentLevel > lastLevel) {
-                    showLevelUp(currentLevel);
-                }
+                if (lastLevel !== null && currentLevel > lastLevel) showLevelUp(currentLevel);
                 lastLevel = currentLevel;
             }
         });
 
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+        console.error("Hiba a startGame-ben:", e); 
+    }
 
-
-    // Csak egyszer futtassuk le a belépésnél
     if (!window.afkChecked) {
         calculateOfflineEarnings();
-        window.afkChecked = true; // Megjegyezzük, hogy ezen a sessionön már ellenőriztük
+        window.afkChecked = true;
     }
+    
     startProductionCycle();
     gameLoop();
-    setInterval(() => {
-        if (!currentPlayer || !objectData) return;
-    }, 10000);
-
-    resizeCanvas(); 
+    resizeCanvas();
 }
 
 window.onload = function() {

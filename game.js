@@ -93,6 +93,19 @@ Object.keys(fileNames).forEach(key => {
     images[key].onload = () => { if (currentPlayer) drawMap(); };
 });
 
+
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        currentPlayer = user.uid;
+        
+        // CSAK ITT hívjuk meg azokat a függvényeket, amik a DB-hez nyúlnak!
+        startGame(); 
+    } else {
+        window.location.href = 'login.html';
+    }
+});
+
+
 window.toggleShop = function() {
     const shop = document.getElementById('shop-window');
     if (shop) {
@@ -155,10 +168,10 @@ window.showLevelUp = function(lvl) {
     document.getElementById('new-level-number').innerText = lvl;
     document.getElementById('level-up-modal').style.display = 'flex';
     
-    // --- DISCORD WEBHOOK ELŐKÉSZÍTÉSE ---
-    // Ide jön majd a kód, ha meglesz a webhook URL-ed
-    console.log(`Webhook küldése: ${currentPlayer} elérte a(z) ${lvl}. szintet!`);
-    // sendDiscordMessage(`${currentPlayer} szintet lépett! Új szint: **${lvl}**`);
+    const message = `🚀 **${currentPlayer}** szintet lépett! Új szint: **${lvl}** a szigeten! 🏝️`;
+    
+    // Meghívjuk a korábban megírt proxy-s függvényt
+    sendDiscordLog(message);
 };
 
 window.closeLevelUp = function() {
@@ -312,17 +325,19 @@ function showStatus(text) {
     setTimeout(() => { el.style.display = 'none'; }, 2000);
 }
 
-async function sendDiscordMessage(msg) {
-    const webhookURL = "IDE_JÖN_A_WEBHOOK_URL";
-    try {
-        await fetch(webhookURL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ content: msg })
-        });
-    } catch (e) { console.error("Discord hiba:", e); }
-}
+async function logToDiscord(msg) {
+    const proxyUrl = "https://script.google.com/macros/s/AKfycbwXyNt9AwP9fF2Bfn7v-bP3jP3OBIRYx5ZXv2ir3-2pNlWCQFfGFHnI8i25YGTnE7g/exec";
 
+    try {
+        await fetch(proxyUrl, {
+            method: 'POST',
+            mode: 'no-cors', // Fontos a Google Script miatt
+            body: JSON.stringify({ message: msg })
+        });
+    } catch (e) {
+        console.log("Discord log hiba, de a játék megy tovább.");
+    }
+}
 
 function updateShopAvailability(objects) {
     const purchasedTypes = Object.values(objects).map(o => o.type);

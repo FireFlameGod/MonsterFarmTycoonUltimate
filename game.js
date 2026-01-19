@@ -900,7 +900,7 @@ async function startGame(userId) {
             const chosenName = document.getElementById('username').value.trim() || "Új Gazda";
             userDataDb = {
                 username: chosenName,
-                coin: 1000,
+                coin: 200,
                 xp: 0,
                 hasIsland: false,
                 lastActive: Date.now()

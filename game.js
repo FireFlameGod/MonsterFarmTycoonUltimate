@@ -92,16 +92,26 @@ Object.keys(fileNames).forEach(key => {
     images[key].src = fileNames[key];
     images[key].onload = () => { if (currentPlayer) drawMap(); };
 });
-
+let gameStarted = false;
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentPlayer = user.uid;
         
-        // CSAK ITT hívjuk meg azokat a függvényeket, amik a DB-hez nyúlnak!
-        startGame(); 
+        // 1. Elrejtjük a bejelentkező felületet
+        const loginScreen = document.getElementById('login-screen');
+        if (loginScreen) loginScreen.style.display = 'none';
+
+        // 2. Csak egyszer indítjuk el a játékot
+        if (!gameStarted) {
+            gameStarted = true;
+            startGame(); 
+        }
     } else {
-        
+        // 3. Ha nincs belépve (vagy kilépett), mutassuk a login-t
+        const loginScreen = document.getElementById('login-screen');
+        if (loginScreen) loginScreen.style.display = 'flex'; // vagy 'block'
+        gameStarted = false;
     }
 });
 

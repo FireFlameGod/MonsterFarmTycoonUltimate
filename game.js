@@ -2,6 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getDatabase, ref, set, get, child, update, increment, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { 
     getAuth, 
+    signOut,
     onAuthStateChanged, 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword 
@@ -1000,10 +1001,9 @@ window.onload = function() {
 
 
 window.logout = async function() {
-    // 1. Időpont mentése Firebase-be a kilépés előtt
-    if (typeof currentPlayer !== 'undefined' && currentPlayer) {
+    // 1. Időpont mentése (Ahogy te is csináltad, szuper az AFK számításhoz!)
+    if (currentPlayer) {
         try {
-            // Beállítjuk az utolsó aktivitást a mostani időre
             await set(ref(db, `users/${currentPlayer}/lastActive`), Date.now());
             console.log("Kijelentkezési idő elmentve.");
         } catch (error) {
@@ -1011,9 +1011,18 @@ window.logout = async function() {
         }
     }
 
-    // 2. A korábbi tisztítási logika
-    localStorage.clear(); 
-    location.reload(); 
+    // 2. Tényleges kijelentkezés a Firebase-ből
+    try {
+        await signOut(auth); // Ez a kulcs! Ez mondja meg a Google-nek, hogy vége a munkamenetnek.
+        console.log("Firebase Auth kijelentkezés sikeres.");
+        
+        // 3. Tisztítás és újraindítás
+        localStorage.clear(); 
+        location.reload(); 
+    } catch (error) {
+        console.error("Hiba a kijelentkezés során:", error);
+        alert("Nem sikerült kijelentkezni!");
+    }
 };
 function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; drawMap(); }
 window.addEventListener('resize', resizeCanvas);

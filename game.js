@@ -101,7 +101,7 @@ onAuthStateChanged(auth, (user) => {
         // CSAK ITT hívjuk meg azokat a függvényeket, amik a DB-hez nyúlnak!
         startGame(); 
     } else {
-        window.location.href = 'login.html';
+        
     }
 });
 

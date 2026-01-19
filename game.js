@@ -827,43 +827,58 @@ function handleMapClick(mouseX, mouseY) {
 window.loginOrRegister = async function() {
     const username = document.getElementById('username').value.trim();
     const pass = document.getElementById('password').value.trim();
+    const errorDisplay = document.getElementById('error-msg');
     
-    if (username.length < 3 || pass.length < 6) {
-        alert("A név min. 3, a jelszó min. 6 karakter legyen!");
+    // Funkció az üzenet megjelenítésére
+    const showMsg = (text) => {
+        errorDisplay.innerText = text;
+        errorDisplay.style.display = 'block';
+    };
+
+    // Alap ellenőrzések
+    if (!username || !pass) {
+        showMsg("Kérlek, tölts ki minden mezőt!");
+        return;
+    }
+    
+    if (pass.length < 6) {
+        showMsg("A jelszónak legalább 6 karakternek kell lennie!");
         return;
     }
 
-    // Trükk: csinálunk belőle egy kamue-mailt a Firebase-nek
     const fakeEmail = `${username}@monsterfarm.hu`;
 
     try {
-        // 1. Megpróbálunk belépni
         await signInWithEmailAndPassword(auth, fakeEmail, pass);
-        console.log("Sikeres belépés!");
+        // Ha sikerült, az onAuthStateChanged elintézi a többit
     } catch (error) {
+        console.log("Auth hiba kódja:", error.code);
+
         if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-            // 2. Ha nem létezik vagy rossz a jelszó, megpróbáljuk regisztrálni
+            // Megpróbáljuk regisztrálni, hátha új felhasználó
             try {
                 const userCredential = await createUserWithEmailAndPassword(auth, fakeEmail, pass);
-                const user = userCredential.user;
-
-                // Létrehozzuk az alap adatait az adatbázisban is
-                await set(ref(db, 'users/' + user.uid), {
+                
+                // Adatbázis alapértékek beállítása
+                await set(ref(db, 'users/' + userCredential.user.uid), {
                     username: username,
                     coin: 0,
                     xp: 0,
                     hasIsland: false
                 });
                 
-                console.log("Sikeres regisztráció!");
+                showMsg("Sikeres regisztráció! Belépés...");
             } catch (regError) {
-                console.error("Hiba:", regError.message);
-                document.getElementById('error-msg').innerText = "Hiba: " + regError.message;
-                document.getElementById('error-msg').style.display = 'block';
+                if (regError.code === 'auth/email-already-in-use') {
+                    showMsg("Ez a név már foglalt, vagy rossz jelszó!");
+                } else {
+                    showMsg("Hiba történt: " + regError.message);
+                }
             }
+        } else if (error.code === 'auth/wrong-password') {
+            showMsg("Hibás jelszó ehhez a névhez!");
         } else {
-            document.getElementById('error-msg').innerText = "Hibás jelszó vagy név!";
-            document.getElementById('error-msg').style.display = 'block';
+            showMsg("Hiba: " + error.message);
         }
     }
 };

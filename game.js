@@ -1,5 +1,11 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, set, get, child, update, increment, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { 
+    getAuth, 
+    onAuthStateChanged, 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyA-MauYrQl5WZ4TPv53vNxuUFnW3dEG0Z8",
@@ -818,18 +824,48 @@ function handleMapClick(mouseX, mouseY) {
     }
 }
 
-window.loginOrRegister = function() {
-    const user = document.getElementById('username').value.trim();
+window.loginOrRegister = async function() {
+    const username = document.getElementById('username').value.trim();
     const pass = document.getElementById('password').value.trim();
-    if (!user || !pass) return;
-    get(child(ref(db), `users/${user}`)).then((snapshot) => {
-        if (snapshot.exists()) {
-            if (snapshot.val().password === pass) startGame(user);
-            else document.getElementById('error-msg').style.display = 'block';
+    
+    if (username.length < 3 || pass.length < 6) {
+        alert("A név min. 3, a jelszó min. 6 karakter legyen!");
+        return;
+    }
+
+    // Trükk: csinálunk belőle egy kamue-mailt a Firebase-nek
+    const fakeEmail = `${username}@monsterfarm.hu`;
+
+    try {
+        // 1. Megpróbálunk belépni
+        await signInWithEmailAndPassword(auth, fakeEmail, pass);
+        console.log("Sikeres belépés!");
+    } catch (error) {
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+            // 2. Ha nem létezik vagy rossz a jelszó, megpróbáljuk regisztrálni
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, fakeEmail, pass);
+                const user = userCredential.user;
+
+                // Létrehozzuk az alap adatait az adatbázisban is
+                await set(ref(db, 'users/' + user.uid), {
+                    username: username,
+                    coin: 0,
+                    xp: 0,
+                    hasIsland: false
+                });
+                
+                console.log("Sikeres regisztráció!");
+            } catch (regError) {
+                console.error("Hiba:", regError.message);
+                document.getElementById('error-msg').innerText = "Hiba: " + regError.message;
+                document.getElementById('error-msg').style.display = 'block';
+            }
         } else {
-            set(ref(db, 'users/' + user), { username: user, password: pass, coin: 0, xp: 0, hasIsland: false }).then(() => startGame(user));
+            document.getElementById('error-msg').innerText = "Hibás jelszó vagy név!";
+            document.getElementById('error-msg').style.display = 'block';
         }
-    });
+    }
 };
 
 async function startGame(user) {
